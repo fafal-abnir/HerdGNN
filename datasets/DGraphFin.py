@@ -1,5 +1,5 @@
 import os.path as osp
-from typing import Callable, Optional
+from typing import Callable, Optional, Literal
 
 import numpy as np
 import torch
@@ -55,13 +55,13 @@ class DGraphFin(InMemoryDataset):
 
     def __init__(self,
                  root: str,
-                 edge_window_size: int = 7,
+                 edge_window_size: Literal["day", "week", "month"] = "week",
                  num_windows: int = 3,
                  transform: Optional[Callable] = None,
                  pre_transform: Optional[Callable] = None,
                  force_reload: bool = False
                  ) -> None:
-        self.edge_window_size = edge_window_size
+        self.edge_window_size = {"week": 7, "day": 1}.get(edge_window_size, 30)
         self.num_windows = num_windows
         super().__init__(root, transform, pre_transform,
                          force_reload=force_reload)
@@ -115,10 +115,10 @@ class DGraphFin(InMemoryDataset):
                 edge_index = torch.tensor(filtered_edge_index, dtype=torch.long)
                 data.edge_index = edge_index.t()
                 data.edge_attr = torch.tensor(filtered_edge_type, dtype=torch.long),
-                available_node = torch.unique(edge_index)
-                data.num_nodes = available_node.size(0)
+                available_nodes = torch.unique(edge_index)
+                data.num_nodes = available_nodes.size(0)
                 node_mask = torch.zeros(x.shape[0], dtype=torch.bool)
-                filtered_indices = available_node[(data.y[available_node] == 0) | (data.y[available_node] == 1)]
+                filtered_indices = available_nodes[(data.y[available_nodes] == 0) | (data.y[available_nodes] == 1)]
                 node_mask[filtered_indices] = True
                 data.node_mask = node_mask
                 data_list.append(data)

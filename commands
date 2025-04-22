@@ -1,0 +1,64 @@
+# DyFraud
+## RedditTitle
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+### No anomaly loss
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GIN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GIN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GIN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GIN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GAT --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GAT --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GAT --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GAT --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+## RedditBody
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+## MOOC
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+# Roland
+## RedditTitle
+python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --num_windows=100;
+python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="RedditTitle" --graph_window_size="week" --num_windows=100;
+## RedditBody
+python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --num_windows=100;
+python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --num_windows=100;
+## MOOC
+python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="MOOC" --graph_window_size="day" --num_windows=100;
+python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="MOOC" --graph_window_size="day" --num_windows=100;
+

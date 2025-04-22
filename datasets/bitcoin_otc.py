@@ -1,5 +1,8 @@
 import datetime
 import os
+import numpy as np
+import pandas as pd
+from typing import Literal
 from typing import Callable, Optional
 
 import torch
@@ -13,56 +16,23 @@ from torch_geometric.data import (
 
 
 class BitcoinOTC(InMemoryDataset):
-    r"""The Bitcoin-OTC dataset from the `"EvolveGCN: Evolving Graph
-    Convolutional Networks for Dynamic Graphs"
-    <https://arxiv.org/abs/1902.10191>`_ paper, consisting of 138
-    who-trusts-whom networks of sequential time steps.
-
-    Args:
-        root (str): Root directory where the dataset should be saved.
-        edge_window_size (int, optional): The window size for the existence of
-            an edge in the graph sequence since its initial creation.
-            (default: :obj:`10`)
-        transform (callable, optional): A function/transform that takes in an
-            :obj:`torch_geometric.data.Data` object and returns a transformed
-            version. The data object will be transformed before every access.
-            (default: :obj:`None`)
-        pre_transform (callable, optional): A function/transform that takes in
-            an :obj:`torch_geometric.data.Data` object and returns a
-            transformed version. The data object will be transformed before
-            being saved to disk. (default: :obj:`None`)
-        force_reload (bool, optional): Whether to re-process the dataset.
-            (default: :obj:`False`)
-
-    **STATS:**
-
-    .. list-table::
-        :widths: 10 10 10 10 10
-        :header-rows: 1
-
-        * - #graphs
-          - #nodes
-          - #edges
-          - #features
-          - #classes
-        * - 138
-          - 6,005
-          - ~2,573.2
-          - 0
-          - 0
-    """
-
     url = 'https://snap.stanford.edu/data/soc-sign-bitcoinotc.csv.gz'
 
     def __init__(
-        self,
-        root: str,
-        edge_window_size: int = 10,
-        transform: Optional[Callable] = None,
-        pre_transform: Optional[Callable] = None,
-        force_reload: bool = False,
+            self,
+            root: str,
+            edge_window_size: Literal["day", "week", "month"] = "week",
+            num_windows: int = 50,
+            fraud_threshold=0.1,
+            benign_threshold=0.6,
+            transform: Optional[Callable] = None,
+            pre_transform: Optional[Callable] = None,
+            force_reload: bool = True,
     ) -> None:
-        self.edge_window_size = edge_window_size
+        self.edge_window_size = {"week": 7, "day": 1}.get(edge_window_size, 30)
+        self.num_windows = num_windows
+        self.fraud_threshold = fraud_threshold
+        self.benign_threshold = benign_threshold
         super().__init__(root, transform, pre_transform,
                          force_reload=force_reload)
         self.load(self.processed_paths[0])
@@ -77,13 +47,15 @@ class BitcoinOTC(InMemoryDataset):
 
     @property
     def num_nodes(self) -> int:
-        assert isinstance(self._data, Data)
-        assert self._data.edge_index is not None
-        return int(self._data.edge_index.max()) + 1
+        return 5_881
 
     @property
     def num_node_features(self) -> int:
         return 1
+
+    @property
+    def num_classes(self) -> int:
+        return 2
 
     def download(self) -> None:
         path = download_url(self.url, self.raw_dir)
@@ -91,39 +63,60 @@ class BitcoinOTC(InMemoryDataset):
         os.unlink(path)
 
     def process(self) -> None:
-        with open(self.raw_paths[0]) as f:
-            lines = [[x for x in line.split(',')]
-                     for line in f.read().split('\n')[:-1]]
+        path = os.path.join(self.raw_dir, "soc-sign-bitcoinotc.csv")
+        bitcoin_df = pd.read_csv(path, names=['src', 'dest', 'rating', 'timestamp'])
+        # preparing data
+        user_ids = pd.unique(bitcoin_df[['src', 'dest']].values.ravel())
+        id_to_index = {user_id: idx for idx, user_id in enumerate(user_ids)}
+        bitcoin_df['src_id'] = bitcoin_df['src'].map(id_to_index)
+        bitcoin_df['dest_id'] = bitcoin_df['dest'].map(id_to_index)
+        num_nodes = len(id_to_index)
+        # preparing node labels
+        incoming = bitcoin_df.groupby('dest_id').agg(
+            total_in_rating=('rating', 'sum'),
+            num_in_rating=('rating', 'count')
+        ).reset_index()
+        incoming['avg_in_rating'] = incoming['total_in_rating'] / incoming['num_in_rating']
+        global_avg_rating = bitcoin_df['rating'].sum() / bitcoin_df['dest_id'].nunique()
+        conditions = [
+            incoming['avg_in_rating'] < self.fraud_threshold,
+            incoming['avg_in_rating'] > (global_avg_rating - self.benign_threshold),
+        ]
+        choices = [1, 0]  # fraud, benign
+        incoming['label'] = np.select(conditions, choices, default=0)  # 2 unknown
+        label_series = pd.Series(2, index=range(num_nodes))
+        label_series.update(incoming['label'])
+        y = torch.tensor(label_series.values, dtype=torch.long)
 
-            edge_indices = [[int(line[0]), int(line[1])] for line in lines]
-            edge_index = torch.tensor(edge_indices, dtype=torch.long)
-            edge_index = edge_index - edge_index.min()
-            edge_index = edge_index.t().contiguous()
-            num_nodes = int(edge_index.max()) + 1
-
-            edge_attrs = [int(line[2]) for line in lines]
-            edge_attr = torch.tensor(edge_attrs, dtype=torch.long)
-
-            stamps = [
-                datetime.datetime.fromtimestamp(int(float(line[3])))
-                for line in lines
-            ]
-
-        offset = datetime.timedelta(days=13.8)  # Results in 138 time steps.
-        graph_indices, factor = [], 1
-        for t in stamps:
-            factor = factor if t < stamps[0] + factor * offset else factor + 1
-            graph_indices.append(factor - 1)
-        graph_idx = torch.tensor(graph_indices, dtype=torch.long)
-
+        #
+        bitcoin_df['datetime'] = pd.to_datetime(bitcoin_df['timestamp'], unit='s')
+        if self.edge_window_size == "day":
+            bitcoin_df['date'] = bitcoin_df['datetime'].dt.date
+        elif self.edge_window_size == "week":
+            bitcoin_df['date'] = bitcoin_df['datetime'].dt.to_period('W').dt.start_time
+        else:
+            bitcoin_df['date'] = bitcoin_df['datetime'].dt.to_period('M').dt.start_time
         data_list = []
-        for i in range(int(graph_idx.max()) + 1):
-            mask = (graph_idx > (i - self.edge_window_size)) & (graph_idx <= i)
+        counter = 0
+        for week, group in bitcoin_df.groupby('date'):
+            edge_index = torch.tensor([group['src_id'].values, group['dest_id'].values], dtype=torch.long)
+            edge_attr = torch.tensor(group['rating'].values, dtype=torch.float).unsqueeze(1)
             data = Data()
-            data.edge_index = edge_index[:, mask]
-            data.edge_attr = edge_attr[mask]
-            data.num_nodes = num_nodes
+            x = torch.ones((num_nodes, 1), dtype=torch.float)
+            data.x = x
+            data.y = y
+            available_nodes = torch.unique(edge_index.flatten())
+            node_mask = torch.zeros(num_nodes, dtype=torch.bool)
+            filtered_indices = available_nodes[(data.y[available_nodes] == 0) | (data.y[available_nodes] == 1)]
+            node_mask[filtered_indices] = True
+            data.edge_index = edge_index
+            data.edge_attr = edge_attr
+            data.num_nodes = len(filtered_indices)
+            data.node_mask = node_mask
             data_list.append(data)
+            counter += 1
+            if counter >= self.num_windows:
+                break
 
         if self.pre_filter is not None:
             data_list = [d for d in data_list if self.pre_filter(d)]
