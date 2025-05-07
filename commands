@@ -1,3 +1,8 @@
+# sync files
+## Sync experiments from server to local
+rsync -azv -r --exclude='*.pt' --exclude='.git*'  --exclude='*.ckpt'   -e 'ssh -o "ProxyCommand ssh servers@db.disi.unitn.eu nc %h %p"'   servers@beauty.disi.unitn.it:/home/servers/vahid/DyFraudNet/experiments/*   ./DyFraudNet/experiments/
+## Sync file from local to server
+rsync -azv -r --exclude=".git*" --exclude="*.ckpt" --exclude="*.pt" -e 'ssh -o "ProxyCommand ssh servers@db.disi.unitn.eu nc %h %p"' DyFraudNet/ servers@beauty.disi.unitn.it:/home/servers/vahid/DyFraudNet/
 # DyFraud
 ## RedditTitle
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
@@ -34,6 +39,14 @@ python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_t
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.0 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="RedditBody" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
@@ -51,14 +64,17 @@ python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_t
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory;
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
+## DGraphFin
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
 # Roland
 ## RedditTitle
 python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --num_windows=100;
 python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="RedditTitle" --graph_window_size="week" --num_windows=100;
 ## RedditBody
-python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --num_windows=100;
-python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --num_windows=100;
+python3 roland_main.py  --epochs=300 --learning_rate=0.001 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --num_windows=100;
+python3 roland_main.py  --epochs=300 --learning_rate=0.001 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --num_windows=100;
 ## MOOC
-python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="MOOC" --graph_window_size="day" --num_windows=100;
-python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="MOOC" --graph_window_size="day" --num_windows=100;
-
+python3 roland_main.py  --epochs=300 --learning_rate=0.005 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="MOOC" --graph_window_size="day" --num_windows=100;
+python3 roland_main.py  --epochs=300 --learning_rate=0.005 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="MOOC" --graph_window_size="day" --num_windows=100;
+## DGraphFin
+python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --num_windows=100;

@@ -2,7 +2,7 @@ import argparse
 import torch
 import copy
 import pytorch_lightning as L
-from pytorch_lightning.callbacks import ModelCheckpoint, DeviceStatsMonitor
+from pytorch_lightning.callbacks import ModelCheckpoint, DeviceStatsMonitor, EarlyStopping
 from pytorch_lightning.loggers import CSVLogger
 from datasets.data_loading import get_dataset
 from torch_geometric.data import DataLoader
@@ -68,6 +68,7 @@ def main():
         lightning_root_dir = "experiments/dyfraudnet/edge_level"
     dataset = get_dataset(name=dataset_name, force_reload=force_reload_dataset, edge_window_size=graph_window_size,
                           num_windows=num_windows)
+    print(f"Number of windows: {len(dataset)}")
     for data_index in range(len(dataset) - 1):
         snapshot = dataset[data_index]
         if snapshot.x is None:
@@ -109,9 +110,14 @@ def main():
             val_loader = DataLoader([val_data], batch_size=1)
             test_loader = DataLoader([test_data], batch_size=1)
             # Callbacks
-            model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
+            early_stop_callback = EarlyStopping(
+                monitor='val_avg_pr',
+                mode='max',
+                patience=10
+            )
+            # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
             trainer = L.Trainer(default_root_dir=experiments_dir,
-                                callbacks=[model_checkpoint],
+                                callbacks=[early_stop_callback],
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,
@@ -206,9 +212,14 @@ def main():
             val_loader = DataLoader([val_data], batch_size=1)
             test_loader = DataLoader([test_data], batch_size=1)
             # Callbacks
-            model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
+            early_stop_callback = EarlyStopping(
+                monitor='val_avg_pr',
+                mode='max',
+                patience=10
+            )
+            # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
             trainer = L.Trainer(default_root_dir=experiments_dir,
-                                callbacks=[model_checkpoint],
+                                callbacks=[early_stop_callback],
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,

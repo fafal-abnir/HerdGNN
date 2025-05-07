@@ -45,6 +45,9 @@ class RedditBody(InMemoryDataset):
         return 'data.pt'
 
     @property
+    def num_nodes(self) -> int:
+        return 35_776
+    @property
     def num_node_features(self) -> int:
         return 300
 

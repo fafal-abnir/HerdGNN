@@ -1,8 +1,9 @@
+import gc
 import argparse
 import torch
 import copy
 import pytorch_lightning as L
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import CSVLogger
 from datasets.data_loading import get_dataset
 from torch_geometric.data import DataLoader
@@ -24,6 +25,7 @@ def get_args():
                         help="Size of memory for evolving weights (default: 128)")
     parser.add_argument("--gnn_type", type=str, choices=["GIN", "GAT", "GCN"], default="GCN",
                         help="Type of GNN model: GIN, GAT, or GCN (default: GCN)")
+    parser.add_argument("--fresh_start", action="store_true", help="retraining from scratch on each timestamp")
     parser.add_argument("--update_type", type=str, choices=["gru", "mlp", "moving"], default="gru",
                         help="Type of updating node embeddings: gru, mlp, or moving (default: gru)")
     parser.add_argument("--dataset_name", type=str,
@@ -37,15 +39,20 @@ def get_args():
 
 def main():
     args = get_args()
+    # Model arguments
     hidden_conv1 = args.hidden_conv1
     hidden_conv2 = args.hidden_conv2
     epochs = args.epochs
     learning_rate = args.learning_rate
     gnn_type = args.gnn_type
     update_type = args.update_type
+    fresh_start = args.fresh_start
+    # Data arguments
     dataset_name = args.dataset_name
+    force_reload_dataset = args.force_reload_dataset
     graph_window_size = args.graph_window_size
     num_windows = args.num_windows
+    model = None
     experiment_datetime = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     if dataset_name in ["DGraphFin"]:
         task = "Node"
@@ -53,26 +60,20 @@ def main():
     else:
         task = "Edge"
         lightning_root_dir = "experiments/roland/edge_level"
-    dataset = get_dataset(name=dataset_name, force_reload=False, edge_window_size=graph_window_size,
+    dataset = get_dataset(name=dataset_name, force_reload=force_reload_dataset, edge_window_size=graph_window_size,
                           num_windows=num_windows)
-    # dataset = DGraphFin('data/DGraphFin', force_reload=True, edge_window_size=graph_window_size,
-    #                     num_windows=num_windows)
+    print(f"Number of windows: {len(dataset)}")
+
     for data_index in range(len(dataset) - 1):
         if data_index == 0:
             num_nodes = dataset.num_nodes
             previous_embeddings = [
                 torch.Tensor([[0 for _ in range(hidden_conv1)] for _ in range(num_nodes)]),
                 torch.Tensor([[0 for _ in range(hidden_conv2)] for _ in range(num_nodes)])]
-        else:
-            _, previous_embeddings = lightningModule.forward(train_data)
         snapshot = dataset[data_index]
-        if snapshot.x is None:
-            snapshot.x = torch.Tensor([[1] for _ in range(snapshot.num_nodes)])
-
-        if snapshot.x is None:
-            snapshot.x = torch.Tensor([[1] for _ in range(snapshot.num_nodes)])
 
         if task == "Node":
+            ## preparing train and val
             train_mask = torch.zeros_like(snapshot.node_mask, dtype=torch.bool)
             val_mask = torch.zeros_like(snapshot.node_mask, dtype=torch.bool)
             train_indices = snapshot.node_mask.nonzero(as_tuple=True)[0]
@@ -82,33 +83,30 @@ def main():
             val_mask[train_indices[perm[split_idx:]]] = True
             train_data = snapshot.clone()
             train_data.node_mask = train_mask
-            train_data.previous_embeddings = previous_embeddings
 
             val_data = snapshot.clone()
             val_data.node_mask = val_mask
-            test_data = copy.deepcopy(dataset[data_index + 1])
-            test_data.num_current_edges = test_data.num_edges
-            test_data.num = test_data.num_nodes
-            val_data.previous_embeddings = previous_embeddings
-            test_data.previous_embeddings = previous_embeddings
-            if snapshot.x is None:
-                test_data.x = torch.Tensor([[1] for _ in range(test_data.num_nodes)])
-
-            model = RolandGNN(snapshot.x.shape[1], hidden_conv1, hidden_conv2, dataset.num_nodes, gnn_type=gnn_type,
-                              update=update_type)
+            if (model is None) or fresh_start:
+                model = RolandGNN(snapshot.x.shape[1], hidden_conv1, hidden_conv2, dataset.num_nodes,
+                                  previous_embeddings,
+                                  gnn_type=gnn_type,
+                                  update=update_type)
             lightningModule = LightningNodeGNN(model, learning_rate=learning_rate)
             experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_conv1}_{hidden_conv2}/{experiment_datetime}/index_{data_index} "
             csv_logger = CSVLogger(experiments_dir, version="")
             print(f"Time Index: {data_index}, data: {dataset_name}")
             print(train_data)
             print(val_data)
-            print(test_data)
-            # Start training and testing.
+            # Start training
             train_loader = DataLoader([train_data], batch_size=1)
             val_loader = DataLoader([val_data], batch_size=1)
-            test_loader = DataLoader([test_data], batch_size=1)
+            # early_stop_callback = EarlyStopping(
+            #     monitor='val_loss',
+            #     mode='min',
+            #     patience=10
+            # )
+            # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
             trainer = L.Trainer(default_root_dir=experiments_dir,
-                                callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")],
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,
@@ -116,8 +114,19 @@ def main():
                                 max_epochs=epochs
                                 )
             trainer.fit(lightningModule, train_loader, val_loader)
+            _, previous_embeddings = lightningModule.forward(train_data)
+            model.set_previous_embeddings(previous_embeddings)
+            # testing
+            test_data = copy.deepcopy(dataset[data_index + 1])
+            test_data.num_current_edges = test_data.num_edges
+            test_data.num = test_data.num_nodes
+            test_loader = DataLoader([test_data], batch_size=1)
+            print(test_data)
             trainer.test(lightningModule, test_loader)
-        else:
+            del train_data, train_loader, val_data, val_loader, test_data, test_loader, snapshot, previous_embeddings
+            gc.collect()
+            torch.cuda.empty_cache()
+        else:  # Edge task=="Edge"
             num_edges = snapshot.edge_index.size(1)
             perm = torch.randperm(num_edges)
             train_ratio = 0.8
@@ -127,28 +136,19 @@ def main():
 
             train_idx = perm[:train_end]
             val_idx = perm[train_end:val_end]
-            # test_idx = perm[val_end:]
-
+            # prepare train,val
             train_data = snapshot.clone()
             train_data.edge_label_index = snapshot.edge_index[:, train_idx]
             train_data.edge_attr = snapshot.edge_attr[train_idx]
             train_data.y = train_data.y[train_idx]
-            train_data.previous_embeddings = previous_embeddings
 
             val_data = snapshot.clone()
             val_data.edge_label_index = snapshot.edge_index[:, val_idx]
             val_data.y = snapshot.y[val_idx]
             val_data.edge_attr = snapshot.edge_attr[val_idx]
 
-            test_data = copy.deepcopy(dataset[data_index + 1])
-            test_data.num_current_edges = test_data.num_edges
-            test_data.num = test_data.num_nodes
-            val_data.previous_embeddings = previous_embeddings
-            test_data.edge_label_index = test_data.edge_index
-            test_data.previous_embeddings = previous_embeddings
-            if snapshot.x is None:
-                test_data.x = torch.Tensor([[1] for _ in range(test_data.num_nodes)])
-            model = EdgeRolandGNN(snapshot.x.shape[1], hidden_conv1, hidden_conv2, dataset.num_nodes,
+            model = EdgeRolandGNN(snapshot.x.shape[1], hidden_conv1, hidden_conv2,
+                                  dataset.num_nodes, previous_embeddings,
                                   dataset.num_edge_features, gnn_type=gnn_type,
                                   update=update_type)
             lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate)
@@ -157,13 +157,17 @@ def main():
             print(f"Time Index: {data_index}, data: {dataset_name}")
             print(train_data)
             print(val_data)
-            print(test_data)
             # Start training and testing.
             train_loader = DataLoader([train_data], batch_size=1)
             val_loader = DataLoader([val_data], batch_size=1)
-            test_loader = DataLoader([test_data], batch_size=1)
+            early_stop_callback = EarlyStopping(
+                monitor='val_loss',
+                mode='min',
+                patience=10
+            )
+            # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
             trainer = L.Trainer(default_root_dir=experiments_dir,
-                                callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")],
+                                callbacks=[early_stop_callback],
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,
@@ -171,7 +175,19 @@ def main():
                                 max_epochs=epochs
                                 )
             trainer.fit(lightningModule, train_loader, val_loader)
+            _, previous_embeddings = lightningModule.forward(train_data)
+            model.set_previous_embeddings(previous_embeddings)
+            # Preparing test data
+            test_data = copy.deepcopy(dataset[data_index + 1])
+            test_data.num_current_edges = test_data.num_edges
+            test_data.num = test_data.num_nodes
+            test_data.edge_label_index = test_data.edge_index
+            print(test_data)
+            test_loader = DataLoader([test_data], batch_size=1)
             trainer.test(lightningModule, test_loader)
+            del train_data, val_data, test_data, snapshot, previous_embeddings
+            gc.collect()
+            torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":

@@ -35,8 +35,7 @@ class LightningNodeGNN(L.LightningModule):
     def forward(self, data):
         x = data.x
         edge_index = data.edge_index
-        previous_embeddings = data.previous_embeddings
-        pred, current_embeddings = self.model(x, edge_index, previous_embeddings)
+        pred, current_embeddings = self.model(x, edge_index)
         return pred, current_embeddings
 
     def configure_optimizers(self):
@@ -104,20 +103,20 @@ class LightningEdgeGNN(L.LightningModule):
     def reset_loss(self, loss):
         self.loss_fn = loss()
 
-    # def forward(self, x, edge_index, edge_label_index, previous_embeddings=None, num_current_edges=None,
-    #             num_previous_edges=None):
     def forward(self, data):
         x = data.x
         edge_index = data.edge_index
-        previous_embeddings = data.previous_embeddings
         edge_label_index = data.edge_label_index
         edge_attr = data.edge_attr
-        pred, current_embeddings = self.model(x, edge_index, edge_label_index, edge_attr, previous_embeddings)
+        pred, current_embeddings = self.model(x, edge_index, edge_label_index, edge_attr)
         return pred, current_embeddings
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(params=self.parameters(), lr=self.learning_rate, weight_decay=5e-4)
         return optimizer
+
+    def on_train_start(self):
+        print(f"================================= Model is on: {self.device}")
 
     def _shared_step(self, batch):
         start_time = time.time()
@@ -127,7 +126,7 @@ class LightningEdgeGNN(L.LightningModule):
         avg_pr = self.metric_avgpr(pred_cont, batch.y.int())
         auc_roc = self.metric_auroc(pred_cont, batch.y.int())
         elapsed_time = time.time() - start_time
-        self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("forward_time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
         if torch.cuda.is_available():
             memory_allocated = torch.cuda.memory_allocated() / 1e6  # MB
             memory_reserved = torch.cuda.memory_reserved() / 1e6  # MB
@@ -138,10 +137,13 @@ class LightningEdgeGNN(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss, avg_pr, auc_roc = self._shared_step(batch)
+        start_time = time.time()
         optimizer = self.optimizers()  # Get the optimizer
         self.manual_backward(loss, retain_graph=True)  # Manually handle backward pass
         optimizer.step()  # Update the model parameters
         optimizer.zero_grad()  # Zero the gradients for the next step
+        elapsed_time = time.time() - start_time
+        self.log("backward_time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
         self.log("train_avg_pr", avg_pr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_au_roc", auc_roc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)

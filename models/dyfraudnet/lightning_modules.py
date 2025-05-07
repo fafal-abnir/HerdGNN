@@ -8,13 +8,14 @@ import pytorch_lightning as L
 
 
 class LightningNodeGNN(L.LightningModule):
-    def __init__(self, model, learning_rate, alpha: float = 0.1):
+    def __init__(self, model, learning_rate, alpha: float = 0.1, anomaly_loss_margin: float = 4.0):
         super().__init__()
         self.model = model
         self.learning_rate = learning_rate
         self.metric_avgpr = BinaryAveragePrecision()
         self.metric_auroc = BinaryAUROC()
         self.hparams.alpha = alpha
+        self.anomaly_loss_margin = anomaly_loss_margin
         self.normal_as_mean = 0
         self.normal_as_std = 1
         self.loss_fn = BCEWithLogitsLoss()
@@ -44,7 +45,7 @@ class LightningNodeGNN(L.LightningModule):
         bce_loss = self.loss_fn(pred[mask], labels.type_as(pred))
         # anomaly loss
         masked_anomaly_scores = anomaly_scores[mask]
-        anomaly_loss = self.anomaly_loss(masked_anomaly_scores, labels)
+        anomaly_loss = self.anomaly_loss(masked_anomaly_scores, labels, self.anomaly_loss_margin)
         # total loss
         self.log("bce_loss", bce_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
         self.log("anomaly_loss", anomaly_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
@@ -111,14 +112,16 @@ class LightningNodeGNN(L.LightningModule):
         _, node_embeddings = self.forward(batch)
         return node_embeddings
 
+
 class LightningEdgeGNN(L.LightningModule):
-    def __init__(self, model, learning_rate, alpha: float = 0.1):
+    def __init__(self, model, learning_rate, alpha: float = 0.1, anomaly_loss_margin: float = 4.0):
         super().__init__()
         self.model = model
         self.learning_rate = learning_rate
         self.metric_avgpr = BinaryAveragePrecision()
         self.metric_auroc = BinaryAUROC()
         self.hparams.alpha = alpha
+        self.anomaly_loss_margin = anomaly_loss_margin
         self.normal_as_mean = 0
         self.normal_as_std = 1
         self.loss_fn = BCEWithLogitsLoss()
@@ -133,7 +136,7 @@ class LightningEdgeGNN(L.LightningModule):
         edge_index = data.edge_index
         edge_label_index = data.edge_label_index
         edge_attr = data.edge_attr
-        pred, anomaly_scores, embeddings = self.model(x, edge_index,edge_label_index, edge_attr)
+        pred, anomaly_scores, embeddings = self.model(x, edge_index, edge_label_index, edge_attr)
         return pred, anomaly_scores, embeddings
 
     def configure_optimizers(self):
@@ -150,7 +153,7 @@ class LightningEdgeGNN(L.LightningModule):
         bce_loss = self.loss_fn(pred, labels.type_as(pred))
         # anomaly loss
         masked_anomaly_scores = anomaly_scores
-        anomaly_loss = self.anomaly_loss(masked_anomaly_scores, labels)
+        anomaly_loss = self.anomaly_loss(masked_anomaly_scores, labels, self.anomaly_loss_margin)
         # total loss
         self.log("bce_loss", bce_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
         self.log("anomaly_loss", anomaly_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)

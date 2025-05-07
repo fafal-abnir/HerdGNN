@@ -19,7 +19,8 @@ class ModelConfig:
 
 
 class RolandGNN(torch.nn.Module):
-    def __init__(self, input_dim, hidden_conv1, hidden_conv2, num_nodes, dropout=0.0, gnn_type="GCN", update='gru',
+    def __init__(self, input_dim, hidden_conv1, hidden_conv2, num_nodes, previous_embeddings, dropout=0.0,
+                 gnn_type="GCN", update='gru',
                  heads=1):
         # """
         # Args:
@@ -38,8 +39,8 @@ class RolandGNN(torch.nn.Module):
         # TODO: I should find a solution for handling multiple layer forward
         self.hidden_conv1 = hidden_conv1
         self.hidden_conv2 = hidden_conv2
-        self.preprocess1 = Linear(input_dim, 256)
-        self.preprocess2 = Linear(256, 128)
+        self.preprocess1 = Linear(input_dim, 128)
+        self.preprocess2 = Linear(128, 128)
         if gnn_type == "GAT":
             self.conv1 = pyg_nn.GATConv(128, hidden_conv1 // heads, heads=heads)
             self.conv2 = pyg_nn.GATConv(hidden_conv1, hidden_conv2 // heads, heads=heads)
@@ -51,7 +52,7 @@ class RolandGNN(torch.nn.Module):
             self.conv2 = pyg_nn.GCNConv(hidden_conv1, hidden_conv2)
         # self.conv1 = gnn_layer(128, hidden_conv1)
         # self.conv2 = gnn_layer(hidden_conv1, hidden_conv2)
-        self.postprocessing1 = pyg_nn.Linear(hidden_conv2, 2)
+        self.postprocessing1 = pyg_nn.Linear(hidden_conv2, 1)
         self.dropout = dropout
         # Update layer
         self.update = update
@@ -66,19 +67,22 @@ class RolandGNN(torch.nn.Module):
         else:
             assert (0 <= self.update <= 1)
             self.tau = torch.Tensor([self.update])
-        # find better soluction for this part
-        self.previous_embeddings = [
-            torch.Tensor([[0 for _ in range(self.hidden_conv1)] for _ in range(self.num_nodes)]),
-            torch.Tensor([[0 for _ in range(self.hidden_conv2)] for _ in range(self.num_nodes)])]
+        self.register_buffer("previous_embeddings1", previous_embeddings[0].clone().detach())
+        self.register_buffer("previous_embeddings2", previous_embeddings[0].clone().detach())
+
+    def set_previous_embeddings(self, previous_embeddings):
+        with torch.no_grad():
+            self.previous_embeddings1.copy_(previous_embeddings[0].clone().detach())
+            self.previous_embeddings2.copy_(previous_embeddings[1].clone().detach())
 
     def reset_parameters(self):
         self.conv1.reset_parameters()
         self.conv2.reset_parameters()
         self.postprocessing1.reset_parameters()
 
-    def forward(self, x, edge_index, previous_embeddings=None):
-        if previous_embeddings is not None:
-            self.previous_embeddings = [previous_embeddings[0].clone(), previous_embeddings[1].clone()]
+    def forward(self, x, edge_index):
+        # if previous_embeddings is not None:
+        #     self.previous_embeddings = [previous_embeddings[0].clone(), previous_embeddings[1].clone()]
         current_embeddings = [torch.Tensor([]), torch.Tensor([])]
         # Preprocess step
         h = self.preprocess1(x)
@@ -93,39 +97,36 @@ class RolandGNN(torch.nn.Module):
         h = F.dropout(h, p=self.dropout, inplace=True)
         # Update embedding after first layer
         if self.update == "gru":
-            h = self.gru1(h, self.previous_embeddings[0].clone())
+            h = self.gru1(h, self.previous_embeddings1)
         elif self.update == "mlp":
-            hin = torch.cat((h, self.previous_embeddings[0].clone()), dim=1)
+            hin = torch.cat((h, self.previous_embeddings1), dim=1)
             h = self.mlp1(hin)
         else:
             h = torch.Tensor(
-                (self.tau * self.previous_embeddings[0].clone() + (1 - self.tau) * h.clone()).detach().numpy())
+                (self.tau * self.previous_embeddings1 + (1 - self.tau) * h.clone()).detach().numpy())
         current_embeddings[0] = h.clone()
         # Conv2 layer 2
         h = self.conv2(h, edge_index)
         h = F.leaky_relu(h, inplace=False)
         h = F.dropout(h, p=self.dropout, inplace=True)
         if self.update == "gru":
-            h = self.gru2(h, self.previous_embeddings[1].clone())
+            h = self.gru2(h, self.previous_embeddings2)
         elif self.update == "mlp":
-            hin = torch.cat((h, self.previous_embeddings[1].clone()), dim=1)
+            hin = torch.cat((h, self.previous_embeddings2), dim=1)
             h = self.mlp2(hin)
         else:
-            h = torch.Tensor((self.tau * self.previous_embeddings[1].clone() + (1 - self.tau) * h.clone()))
+            h = torch.Tensor((self.tau * self.previous_embeddings2 + (1 - self.tau) * h.clone()))
         current_embeddings[1] = h.clone()
 
-        # HADAMARD
-        # h_src = h[edge_label_index[0]]
-        # h_dst = h[edge_label_index[1]]
-        # h_hadamard = torch.mul(h_src, h_dst)
         h = self.postprocessing1(h)
-        h = torch.sum(h, dim=-1)
+        h = h.view(-1)
         return h, current_embeddings
 
 
 class EdgeRolandGNN(torch.nn.Module):
-    def __init__(self, input_dim, hidden_conv1, hidden_conv2, num_nodes, edge_attr_dim, dropout=0.0, gnn_type="GCN",
-                 update='gru',heads=1):
+    def __init__(self, input_dim, hidden_conv1, hidden_conv2, num_nodes, previous_embeddings, edge_attr_dim,
+                 dropout=0.0, gnn_type="GCN",
+                 update='gru', heads=1):
         # """
         # Args:
         #     input_dim: Dimension of input features
@@ -143,8 +144,8 @@ class EdgeRolandGNN(torch.nn.Module):
         # TODO: I should find a solution for handling multiple layer forward
         self.hidden_conv1 = hidden_conv1
         self.hidden_conv2 = hidden_conv2
-        self.preprocess1 = Linear(input_dim, 256)
-        self.preprocess2 = Linear(256, 128)
+        self.preprocess1 = Linear(input_dim, 128)
+        self.preprocess2 = Linear(128, 128)
         if gnn_type == "GAT":
             self.conv1 = pyg_nn.GATConv(128, hidden_conv1 // heads, heads=heads)
             self.conv2 = pyg_nn.GATConv(hidden_conv1, hidden_conv2 // heads, heads=heads)
@@ -170,20 +171,21 @@ class EdgeRolandGNN(torch.nn.Module):
         else:
             assert (0 <= self.update <= 1)
             self.tau = torch.Tensor([self.update])
-        # find better soluction for this part
-        self.previous_embeddings = [
-            torch.Tensor([[0 for _ in range(self.hidden_conv1)] for _ in range(self.num_nodes)]),
-            torch.Tensor([[0 for _ in range(self.hidden_conv2)] for _ in range(self.num_nodes)])]
+        self.register_buffer("previous_embeddings1", previous_embeddings[0].clone().detach())
+        self.register_buffer("previous_embeddings2", previous_embeddings[0].clone().detach())
+
+    def set_previous_embeddings(self, previous_embeddings):
+        with torch.no_grad():
+            self.previous_embeddings1.copy_(previous_embeddings[0].clone().detach())
+            self.previous_embeddings2.copy_(previous_embeddings[1].clone().detach())
 
     def reset_parameters(self):
         self.conv1.reset_parameters()
         self.conv2.reset_parameters()
         self.postprocessing1.reset_parameters()
 
-    def forward(self, x, edge_index, edge_label_index, edge_attr, previous_embeddings=None, num_current_edges=None,
+    def forward(self, x, edge_index, edge_label_index, edge_attr, num_current_edges=None,
                 num_previous_edges=None):
-        if previous_embeddings is not None:
-            self.previous_embeddings = [previous_embeddings[0].clone(), previous_embeddings[1].clone()]
         if self.update == "moving" and num_current_edges is not None and num_previous_edges is not None:
             self.tau = torch.Tensor([num_previous_edges / (num_previous_edges + num_current_edges)]).clone()
         current_embeddings = [torch.Tensor([]), torch.Tensor([])]
@@ -200,25 +202,25 @@ class EdgeRolandGNN(torch.nn.Module):
         h = F.dropout(h, p=self.dropout, inplace=True)
         # Update embedding after first layer
         if self.update == "gru":
-            h = self.gru1(h, self.previous_embeddings[0].clone())
+            h = self.gru1(h, self.previous_embeddings1)
         elif self.update == "mlp":
-            hin = torch.cat((h, self.previous_embeddings[0].clone()), dim=1)
+            hin = torch.cat((h, self.previous_embeddings1), dim=1)
             h = self.mlp1(hin)
         else:
-            h = torch.Tensor(
-                (self.tau * self.previous_embeddings[0].clone() + (1 - self.tau) * h.clone()).detach().numpy())
+            h = self.tau.to(h.device) * self.previous_embeddings1 + (1 - self.tau.to(h.device)) * h
+
         current_embeddings[0] = h.clone()
         # Conv2 layer 2
         h = self.conv2(h, edge_index)
         h = F.leaky_relu(h, inplace=False)
         h = F.dropout(h, p=self.dropout, inplace=True)
         if self.update == "gru":
-            h = self.gru2(h, self.previous_embeddings[1].clone())
+            h = self.gru2(h, self.previous_embeddings2)
         elif self.update == "mlp":
-            hin = torch.cat((h, self.previous_embeddings[1].clone()), dim=1)
+            hin = torch.cat((h, self.previous_embeddings2), dim=1)
             h = self.mlp2(hin)
         else:
-            h = torch.Tensor((self.tau * self.previous_embeddings[1].clone() + (1 - self.tau) * h.clone()))
+            h = torch.Tensor((self.tau * self.previous_embeddings2 + (1 - self.tau) * h.clone()))
         current_embeddings[1] = h.clone()
 
         # HADAMARD
