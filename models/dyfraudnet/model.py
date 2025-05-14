@@ -16,48 +16,45 @@ class NodeDyFraudNet(nn.Module):
         super().__init__()
         self.preprocess1 = Linear(input_dim, 256)
         self.preprocess2 = Linear(256, hidden_size)
-        if enable_memory:
-            self.conv1 = EvolveGNN_O(hidden_size, memory_size, hidden_size, gnn_type)
-            self.conv2 = EvolveGNN_O(hidden_size, memory_size, hidden_size, gnn_type)
-        else:
-            if gnn_type == "GAT":
-                self.conv1 = pyg_nn.GATConv(hidden_size, hidden_size // heads, heads=heads)
-                self.conv2 = pyg_nn.GATConv(hidden_size, hidden_size // heads, heads=heads)
-            elif gnn_type == "GIN":
-                self.conv1 = pyg_nn.GINConv(nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.ReLU()))
-                self.conv2 = pyg_nn.GINConv(nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.ReLU()))
-            else:  # GCN
-                self.conv1 = pyg_nn.GCNConv(hidden_size, hidden_size)
-                self.conv2 = pyg_nn.GCNConv(hidden_size, hidden_size)
+        self.convs = nn.ModuleList()
+        for i in range(num_layers):
+            if enable_memory:
+                self.convs.append(EvolveGNN_O(hidden_size, memory_size, hidden_size, gnn_type))
+            else:
+                if gnn_type == "GAT":
+                    self.convs.append(pyg_nn.GATConv(hidden_size, hidden_size // heads, heads=heads))
+                elif gnn_type == "GIN":
+                    self.convs.append(pyg_nn.GINConv(
+                        nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.ReLU())))
+                else:  # GCN
+                    self.convs.append(pyg_nn.GCNConv(hidden_size, hidden_size))
         self.postprocessing1 = geom_nn.Linear(hidden_size, out_put_size)
         self.postprocessing_anomaly = geom_nn.Linear(hidden_size, 1)
         self.dropout = dropout
 
     def reset_parameters(self):
-        self.conv1.reset_parameters()
-        self.conv2.reset_parameters()
+        for conv in self.convs:
+            conv.reset_parameters()
         self.postprocessing1.reset_parameters()
+        self.postprocessing_anomaly.reset_parameters()
 
     def forward(self, x, edge_index):
         # Preprocess step
-        # h_hat is embedding, h classification, h_anomaly is for anomaly score
+        # h is embedding, out classification, anomaly_score is for anomaly score
         h = self.preprocess1(x)
         h = F.leaky_relu(h, inplace=False)
         h = F.dropout(h, p=self.dropout, inplace=True)
         h = self.preprocess2(h)
         h = F.leaky_relu(h, inplace=False)
         h = F.dropout(h, p=self.dropout, inplace=True)
-        h = self.conv1(h, edge_index)
-
-        h = F.leaky_relu(h, inplace=False)
-        h = F.dropout(h, p=self.dropout, inplace=True)
-        h = self.conv2(h, edge_index)
-        h = F.leaky_relu(h, inplace=False)
-        h_hat = F.dropout(h, p=self.dropout, inplace=True)
-        h = self.postprocessing1(h_hat)
-        h = torch.sum(h, dim=-1)
-        anomaly_score = self.postprocessing_anomaly(h_hat).squeeze(-1)
-        return h, anomaly_score, h_hat
+        for conv in self.convs:
+            h = conv(h, edge_index)
+            h = F.leaky_relu(h)
+            h = F.dropout(h, p=self.dropout, training=self.training)
+        out = self.postprocessing1(h)
+        out = torch.sum(out, dim=-1)
+        anomaly_score = self.postprocessing_anomaly(h).squeeze(-1)
+        return out, anomaly_score, h
 
     def get_embedding(self, x, edge_index):
         _, _, embeddings = self.forward(x, edge_index)
@@ -70,19 +67,18 @@ class EdgeDyFraudNet(nn.Module):
         super().__init__()
         self.preprocess1 = Linear(input_dim, 256)
         self.preprocess2 = Linear(256, hidden_size)
-        if enable_memory:
-            self.conv1 = EvolveGNN_O(hidden_size, memory_size, hidden_size, gnn_type)
-            self.conv2 = EvolveGNN_O(hidden_size, memory_size, hidden_size, gnn_type)
-        else:
-            if gnn_type == "GAT":
-                self.conv1 = pyg_nn.GATConv(hidden_size, hidden_size // heads, heads=heads)
-                self.conv2 = pyg_nn.GATConv(hidden_size, hidden_size // heads, heads=heads)
-            elif gnn_type == "GIN":
-                self.conv1 = pyg_nn.GINConv(nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.ReLU()))
-                self.conv2 = pyg_nn.GINConv(nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.ReLU()))
-            else:  # GCN
-                self.conv1 = pyg_nn.GCNConv(hidden_size, hidden_size)
-                self.conv2 = pyg_nn.GCNConv(hidden_size, hidden_size)
+        self.convs = nn.ModuleList()
+        for i in range(num_layers):
+            if enable_memory:
+                self.convs.append(EvolveGNN_O(hidden_size, memory_size, hidden_size, gnn_type))
+            else:
+                if gnn_type == "GAT":
+                    self.convs.append(pyg_nn.GATConv(hidden_size, hidden_size // heads, heads=heads))
+                elif gnn_type == "GIN":
+                    self.convs.append(pyg_nn.GINConv(
+                        nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.ReLU())))
+                else:  # GCN
+                    self.convs.append(pyg_nn.GCNConv(hidden_size, hidden_size))
         self.postprocessing1 = geom_nn.Linear(2 * hidden_size + edge_attr_dim, 1)
         self.postprocessing_anomaly = geom_nn.Linear(2 * hidden_size + edge_attr_dim, 1)
         self.dropout = dropout
@@ -94,30 +90,27 @@ class EdgeDyFraudNet(nn.Module):
 
     def forward(self, x, edge_index, edge_label_index, edge_attr):
         # Preprocess step
-        # h_hat is embedding, h classification, h_anomaly is for anomaly score
+        # h is embedding, out classification, anomaly_score is for anomaly score
         h = self.preprocess1(x)
         h = F.leaky_relu(h, inplace=False)
         h = F.dropout(h, p=self.dropout, inplace=True)
         h = self.preprocess2(h)
         h = F.leaky_relu(h, inplace=False)
         h = F.dropout(h, p=self.dropout, inplace=True)
-        h = self.conv1(h, edge_index)
-
-        h = F.leaky_relu(h, inplace=False)
-        h = F.dropout(h, p=self.dropout, inplace=True)
-        h = self.conv2(h, edge_index)
-        h = F.leaky_relu(h, inplace=False)
-        h_hat = F.dropout(h, p=self.dropout, inplace=True)
-        h_src = h_hat[edge_label_index[0]]
-        h_dst = h_hat[edge_label_index[1]]
+        for conv in self.convs:
+            h = conv(h, edge_index)
+            h = F.leaky_relu(h)
+            h = F.dropout(h, p=self.dropout, training=self.training)
+        h_src = h[edge_label_index[0]]
+        h_dst = h[edge_label_index[1]]
         combined = torch.cat([h_src, h_dst, edge_attr], dim=1)
-        h = self.postprocessing1(combined)
+        out = self.postprocessing1(combined)
         # h = self.postprocessing1(h_hat)
         # CLS layer
-        h = h.view(-1)
+        out = out.view(-1)
         # anom score
         anomaly_score = self.postprocessing_anomaly(combined).squeeze(-1)
-        return h, anomaly_score, h_hat
+        return out, anomaly_score, h
 
     def get_embedding(self, x, edge_index):
         _, _, embeddings = self.forward(x, edge_index)

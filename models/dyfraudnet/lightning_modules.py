@@ -7,8 +7,21 @@ from torch.nn import BCEWithLogitsLoss
 import pytorch_lightning as L
 
 
+def merge_gaussians(mu1, sigma1, mu2, sigma2, weight):
+    merged_mean = (1 - weight) * mu1 + weight * mu2
+    var1 = sigma1 ** 2
+    var2 = sigma2 ** 2
+    merged_var = ((1 - weight) * (var1 + (mu1 - merged_mean) ** 2)
+                  + weight * (var2 + (mu2 - merged_mean) ** 2))
+
+    merged_std = merged_var.sqrt() if isinstance(merged_var, torch.Tensor) else merged_var ** 0.5
+
+    return merged_mean, merged_std
+
+
 class LightningNodeGNN(L.LightningModule):
-    def __init__(self, model, learning_rate, alpha: float = 0.1, anomaly_loss_margin: float = 4.0):
+    def __init__(self, model, learning_rate, alpha: float = 0.1, anomaly_loss_margin: float = 4.0,
+                 blend_factor: float = 0.9):
         super().__init__()
         self.model = model
         self.learning_rate = learning_rate
@@ -16,10 +29,10 @@ class LightningNodeGNN(L.LightningModule):
         self.metric_auroc = BinaryAUROC()
         self.hparams.alpha = alpha
         self.anomaly_loss_margin = anomaly_loss_margin
+        self.blend_factor = blend_factor
         self.normal_as_mean = 0
         self.normal_as_std = 1
         self.loss_fn = BCEWithLogitsLoss()
-        # self.loss_fn = BinaryAUROC()
         self.save_hyperparameters(ignore=["model"])
         self.automatic_optimization = False
 
@@ -53,11 +66,18 @@ class LightningNodeGNN(L.LightningModule):
         self.log("total_loss", total_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
         if self.current_epoch + 1 == self.trainer.max_epochs:
             normal_scores = masked_anomaly_scores[labels == 0]
-            self.normal_as_mean = normal_scores.mean().item()
-            self.normal_as_std = normal_scores.std(unbiased=False).item()
+            mu, sigma = merge_gaussians(self.normal_as_mean, self.normal_as_std, normal_scores.mean().item(),
+                                        normal_scores.std(unbiased=False).item(), self.blend_factor)
+            self.normal_as_mean = mu
+            self.normal_as_std = sigma
         pred_cont = torch.sigmoid(pred)
         avg_pr = self.metric_avgpr(pred_cont[batch.node_mask], batch.y[batch.node_mask].int())
         auc_roc = self.metric_auroc(pred_cont[batch.node_mask], batch.y[batch.node_mask].int())
+        num_total = labels.numel()
+        num_pos = (labels == 1).sum().item()
+        skew_ratio = num_pos / float(num_total)
+        aucpr_min = 1 + ((1 - skew_ratio) * torch.log(torch.tensor(1 - skew_ratio))) / skew_ratio
+        aucnpr = (avg_pr - aucpr_min) / (1 - aucpr_min)
         elapsed_time = time.time() - start_time
         self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
         if torch.cuda.is_available():
@@ -66,28 +86,31 @@ class LightningNodeGNN(L.LightningModule):
             self.log("gpu_memory_allocated_MB", memory_allocated, prog_bar=True, on_step=False, on_epoch=True)
             self.log("gpu_memory_reserved_MB", memory_reserved, prog_bar=True, on_step=False, on_epoch=True)
 
-        return total_loss, avg_pr, auc_roc
+        return total_loss, avg_pr, aucnpr, auc_roc
 
     def training_step(self, batch, batch_idx):
-        loss, avg_pr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         optimizer = self.optimizers()  # Get the optimizer
         self.manual_backward(loss, retain_graph=True)  # Manually handle backward pass
         optimizer.step()  # Update the model parameters
         optimizer.zero_grad()  # Zero the gradients for the next step
         self.log("train_avg_pr", avg_pr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log("train_aucnpr", aucnpr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_au_roc", auc_roc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss, avg_pr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         self.log("val_avg_pr", avg_pr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log("val_aucnpr", aucnpr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("val_au_roc", auc_roc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
     def test_step(self, batch, batch_idx):
-        loss, avg_pr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         self.log("test_avg_pr", avg_pr)
+        self.log("test_aucnpr", aucnpr)
         self.log("test_au_roc", auc_roc)
         self.log("test_loss", loss)
 
@@ -114,7 +137,8 @@ class LightningNodeGNN(L.LightningModule):
 
 
 class LightningEdgeGNN(L.LightningModule):
-    def __init__(self, model, learning_rate, alpha: float = 0.1, anomaly_loss_margin: float = 4.0):
+    def __init__(self, model, learning_rate, alpha: float = 0.1, anomaly_loss_margin: float = 4.0,
+                 blend_factor: float = 0.9):
         super().__init__()
         self.model = model
         self.learning_rate = learning_rate
@@ -122,6 +146,7 @@ class LightningEdgeGNN(L.LightningModule):
         self.metric_auroc = BinaryAUROC()
         self.hparams.alpha = alpha
         self.anomaly_loss_margin = anomaly_loss_margin
+        self.blend_factor = blend_factor
         self.normal_as_mean = 0
         self.normal_as_std = 1
         self.loss_fn = BCEWithLogitsLoss()
@@ -161,11 +186,18 @@ class LightningEdgeGNN(L.LightningModule):
         self.log("total_loss", total_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
         if self.current_epoch + 1 == self.trainer.max_epochs:
             normal_scores = masked_anomaly_scores[labels == 0]
-            self.normal_as_mean = normal_scores.mean().item()
-            self.normal_as_std = normal_scores.std(unbiased=False).item()
+            mu, sigma = merge_gaussians(self.normal_as_mean, self.normal_as_std, normal_scores.mean().item(),
+                                        normal_scores.std(unbiased=False).item(), self.blend_factor)
+            self.normal_as_mean = mu
+            self.normal_as_std = sigma
         pred_cont = torch.sigmoid(pred)
         avg_pr = self.metric_avgpr(pred_cont, batch.y.int())
         auc_roc = self.metric_auroc(pred_cont, batch.y.int())
+        num_total = labels.numel()
+        num_pos = (labels == 1).sum().item()
+        skew_ratio = num_pos / float(num_total)
+        aucpr_min = 1 + ((1 - skew_ratio) * torch.log(torch.tensor(1 - skew_ratio))) / skew_ratio
+        aucnpr = (avg_pr - aucpr_min) / (1 - aucpr_min)
         elapsed_time = time.time() - start_time
         self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
         if torch.cuda.is_available():
@@ -174,28 +206,31 @@ class LightningEdgeGNN(L.LightningModule):
             self.log("gpu_memory_allocated_MB", memory_allocated, prog_bar=True, on_step=False, on_epoch=True)
             self.log("gpu_memory_reserved_MB", memory_reserved, prog_bar=True, on_step=False, on_epoch=True)
 
-        return total_loss, avg_pr, auc_roc
+        return total_loss, avg_pr, aucnpr, auc_roc
 
     def training_step(self, batch, batch_idx):
-        loss, avg_pr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         optimizer = self.optimizers()  # Get the optimizer
         self.manual_backward(loss, retain_graph=True)  # Manually handle backward pass
         optimizer.step()  # Update the model parameters
         optimizer.zero_grad()  # Zero the gradients for the next step
         self.log("train_avg_pr", avg_pr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log("train_aucnpr", aucnpr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_au_roc", auc_roc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss, avg_pr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         self.log("val_avg_pr", avg_pr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log("val_aucnpr", aucnpr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("val_au_roc", auc_roc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
     def test_step(self, batch, batch_idx):
-        loss, avg_pr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         self.log("test_avg_pr", avg_pr)
+        self.log("test_aucnpr", aucnpr)
         self.log("test_au_roc", auc_roc)
         self.log("test_loss", loss)
 

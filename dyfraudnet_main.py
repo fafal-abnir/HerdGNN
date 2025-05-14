@@ -23,14 +23,18 @@ def get_args():
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs (default: 10)")
     parser.add_argument("--learning_rate", type=float, default=0.01, help="learning rate(default:0.01")
     parser.add_argument("--alpha", type=float, default=0.1, help="weight of deviation loss to addup to loss function")
+    parser.add_argument("--anomaly_loss_margin", type=float, default=4.0, help="Anomaly loss margin")
+    parser.add_argument("--blend_factor", type=float, default=0.9, help="blend factor for merging 2 distribution")
     parser.add_argument("--hidden_size", type=int, default=128, help="Size of hidden layers (default: 128)")
     parser.add_argument("--memory_size", type=int, default=128,
                         help="Size of memory for evolving weights (default: 128)")
     parser.add_argument("--gnn_type", type=str, choices=["GIN", "GAT", "GCN"], default="GCN",
                         help="Type of GNN model: GIN, GAT, or GCN (default: GCN)")
+    parser.add_argument("--num_layers", type=int, default=2, help="Number of GNN layers")
+    parser.add_argument("--dropout", type=float, default=0.0, help="dropout rate")
     parser.add_argument("--dataset_name", type=str,
                         choices=["DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle", "RedditBody"], default="RedditTitle")
-    parser.add_argument("--force_reload_dataset", action="store_true", help= "Force to download the dataset again.")
+    parser.add_argument("--force_reload_dataset", action="store_true", help="Force to download the dataset again.")
     parser.add_argument("--graph_window_size", type=str, choices=["day", "week", "month"], default="month",
                         help="the size of graph window size")
     parser.add_argument("--num_windows", type=int, default=10, help="Number of windows for running the experiment")
@@ -50,7 +54,11 @@ def main():
     epochs = args.epochs
     learning_rate = args.learning_rate
     alpha = args.alpha
+    anomaly_loss_margin = args.anomaly_loss_margin
+    blend_factor = args.blend_factor
     gnn_type = args.gnn_type
+    num_layers = args.num_layers
+    dropout = args.dropout
     # Data arguments
     dataset_name = args.dataset_name
     force_reload_dataset = args.force_reload_dataset
@@ -58,8 +66,6 @@ def main():
     num_windows = args.num_windows
     model = None
     experiment_datetime = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    # dataset = DGraphFin('data/DGraphFin', force_reload=True, edge_window_size=graph_window_size,
-    #                     num_windows=num_windows)
     if dataset_name in ["DGraphFin"]:
         task = "Node"
         lightning_root_dir = "experiments/dyfraudnet/node_level"
@@ -97,9 +103,10 @@ def main():
                 test_data.x = torch.Tensor([[1] for _ in range(test_data.num_nodes)])
             if (model is None) or fresh_start:
                 model = NodeDyFraudNet(snapshot.x.shape[1], memory_size=memory_size, hidden_size=hidden_size,
-                                       out_put_size=2,
+                                       out_put_size=2, dropout=dropout, num_layers=num_layers,
                                        gnn_type=gnn_type, enable_memory=enable_memory)
-            lightningModule = LightningNodeGNN(model, learning_rate=learning_rate, alpha=alpha)
+            lightningModule = LightningNodeGNN(model, learning_rate=learning_rate, alpha=alpha,
+                                               anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
             csv_logger.log_hyperparams(vars(args))
             print(f"Time Index: {data_index}, data: {dataset_name}")
             print(train_data)
@@ -110,14 +117,13 @@ def main():
             val_loader = DataLoader([val_data], batch_size=1)
             test_loader = DataLoader([test_data], batch_size=1)
             # Callbacks
-            early_stop_callback = EarlyStopping(
-                monitor='val_avg_pr',
-                mode='max',
-                patience=10
-            )
+            # early_stop_callback = EarlyStopping(
+            #     monitor='val_avg_pr',
+            #     mode='max',
+            #     patience=10
+            # )
             # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
             trainer = L.Trainer(default_root_dir=experiments_dir,
-                                callbacks=[early_stop_callback],
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,
@@ -196,10 +202,11 @@ def main():
                 test_data.x = torch.Tensor([[1] for _ in range(test_data.num_nodes)])
             if (model is None) or fresh_start:
                 model = EdgeDyFraudNet(snapshot.x.shape[1], edge_attr_dim=dataset.num_edge_features,
+                                       num_layers=num_layers, dropout = dropout,
                                        memory_size=memory_size, hidden_size=hidden_size,
-
                                        gnn_type=gnn_type, enable_memory=enable_memory)
-            lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate, alpha=alpha)
+            lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate, alpha=alpha,
+                                               anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
             # experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/Mem{enable_memory}_{gnn_type}_F{fresh_start}/{experiment_datetime}/index_{data_index}"
             # csv_logger = CSVLogger(experiments_dir, version="")
             csv_logger.log_hyperparams(vars(args))
@@ -212,14 +219,13 @@ def main():
             val_loader = DataLoader([val_data], batch_size=1)
             test_loader = DataLoader([test_data], batch_size=1)
             # Callbacks
-            early_stop_callback = EarlyStopping(
-                monitor='val_avg_pr',
-                mode='max',
-                patience=10
-            )
+            # early_stop_callback = EarlyStopping(
+            #     monitor='val_avg_pr',
+            #     mode='max',
+            #     patience=10
+            # )
             # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
             trainer = L.Trainer(default_root_dir=experiments_dir,
-                                callbacks=[early_stop_callback],
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,
@@ -259,7 +265,6 @@ def main():
                     train_embeddings_np = train_embeddings[train_data.node_mask].cpu().numpy()
                     test_embeddings = model.get_embedding(test_data.x, test_data.edge_index)
                     test_embeddings_np = test_embeddings[test_data.node_mask].cpu().numpy()
-                # train_label_colors = ['blue' if label == 0 else 'red' for label in train_data.y.cpu().numpy()]
                 test_label_colors = ['blue' if label == 0 else 'red' for label in test_labels_np]
                 visualize_embeddings(train_embeddings_np, train_label_colors, epochs,
                                      f'{experiments_dir}/train_embedding_trained.png')

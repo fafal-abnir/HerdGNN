@@ -65,7 +65,33 @@ python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_t
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --fresh_start;
 python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GAT --dataset="MOOC" --graph_window_size="day" --hidden_size=128 --memory_size=256 --num_windows=100 --enable_memory --fresh_start;
 ## DGraphFin
-python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=256 --num_windows=100;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.1 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.01 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.01 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.01 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.01 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.01 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.01 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=128 --memory_size=128 --num_windows=50 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.01 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=32 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.01 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=32 --num_windows=50 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.01 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=32 --num_windows=50 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.01 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=32 --num_windows=50 --enable_memory --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.00 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=32 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.05 --alph=0.00 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=32 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.001 --alph=0.00 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=32 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.00 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=32 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.01 --alph=0.00 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=16 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.05 --alph=0.00 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=16 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.001 --alph=0.00 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=16 --num_windows=50;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.00 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --hidden_size=32 --memory_size=16 --num_windows=50;
+
+
 # Roland
 ## RedditTitle
 python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="RedditTitle" --graph_window_size="week" --num_windows=100;
