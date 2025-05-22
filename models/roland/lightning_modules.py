@@ -133,10 +133,10 @@ class LightningEdgeGNN(L.LightningModule):
         avg_pr = self.metric_avgpr(pred_cont, batch.y.int())
         auc_roc = self.metric_auroc(pred_cont, batch.y.int())
         num_total = labels.numel()
-        num_pos = (labels ==1).sum().item()
-        skew_ratio = num_pos/num_total
-        aucpr_min = 1+((1-skew_ratio)*torch.log(1-skew_ratio))/skew_ratio
-        aucnpr = (avg_pr-aucpr_min)/(1-aucpr_min)
+        num_pos = (labels == 1).sum().item()
+        skew_ratio = num_pos / float(num_total)
+        aucpr_min = 1 + ((1 - skew_ratio) * torch.log(torch.tensor(1 - skew_ratio))) / skew_ratio
+        aucnpr = (avg_pr - aucpr_min) / (1 - aucpr_min)
         elapsed_time = time.time() - start_time
         self.log("forward_time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
         if torch.cuda.is_available():

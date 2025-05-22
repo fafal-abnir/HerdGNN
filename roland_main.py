@@ -92,8 +92,9 @@ def main():
                                   gnn_type=gnn_type,
                                   update=update_type)
             lightningModule = LightningNodeGNN(model, learning_rate=learning_rate)
-            experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_conv1}_{hidden_conv2}/{experiment_datetime}/index_{data_index} "
+            experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_conv1}_{hidden_conv2}/{experiment_datetime}/index_{data_index}"
             csv_logger = CSVLogger(experiments_dir, version="")
+            csv_logger.log_hyperparams(vars(args))
             print(f"Time Index: {data_index}, data: {dataset_name}")
             print(train_data)
             print(val_data)
@@ -146,28 +147,28 @@ def main():
             val_data.edge_label_index = snapshot.edge_index[:, val_idx]
             val_data.y = snapshot.y[val_idx]
             val_data.edge_attr = snapshot.edge_attr[val_idx]
-
-            model = EdgeRolandGNN(snapshot.x.shape[1], hidden_conv1, hidden_conv2,
-                                  dataset.num_nodes, previous_embeddings,
-                                  dataset.num_edge_features, gnn_type=gnn_type,
-                                  update=update_type)
+            if (model is None) or fresh_start:
+                model = EdgeRolandGNN(snapshot.x.shape[1], hidden_conv1, hidden_conv2,
+                                      dataset.num_nodes, previous_embeddings,
+                                      dataset.num_edge_features, gnn_type=gnn_type,
+                                      update=update_type)
             lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate)
             experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_conv1}_{hidden_conv2}/{experiment_datetime}/index_{data_index} "
             csv_logger = CSVLogger(experiments_dir, version="")
+            csv_logger.log_hyperparams(vars(args))
             print(f"Time Index: {data_index}, data: {dataset_name}")
             print(train_data)
             print(val_data)
             # Start training and testing.
             train_loader = DataLoader([train_data], batch_size=1)
             val_loader = DataLoader([val_data], batch_size=1)
-            early_stop_callback = EarlyStopping(
-                monitor='val_loss',
-                mode='min',
-                patience=10
-            )
+            # early_stop_callback = EarlyStopping(
+            #     monitor='val_loss',
+            #     mode='min',
+            #     patience=10
+            # )
             # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
             trainer = L.Trainer(default_root_dir=experiments_dir,
-                                callbacks=[early_stop_callback],
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,
