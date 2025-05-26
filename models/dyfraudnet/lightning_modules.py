@@ -1,5 +1,6 @@
 import time
 import torch
+from scipy.stats import norm
 from torchmetrics.classification import BinaryAveragePrecision, BinaryAUROC
 import torch.nn.functional as F
 from torch.nn import BCEWithLogitsLoss
@@ -64,12 +65,6 @@ class LightningNodeGNN(L.LightningModule):
         self.log("anomaly_loss", anomaly_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
         total_loss = bce_loss + self.hparams.alpha * anomaly_loss
         self.log("total_loss", total_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
-        if self.current_epoch + 1 == self.trainer.max_epochs:
-            normal_scores = masked_anomaly_scores[labels == 0]
-            mu, sigma = merge_gaussians(self.normal_as_mean, self.normal_as_std, normal_scores.mean().item(),
-                                        normal_scores.std(unbiased=False).item(), self.blend_factor)
-            self.normal_as_mean = mu
-            self.normal_as_std = sigma
         pred_cont = torch.sigmoid(pred)
         avg_pr = self.metric_avgpr(pred_cont[batch.node_mask], batch.y[batch.node_mask].int())
         auc_roc = self.metric_auroc(pred_cont[batch.node_mask], batch.y[batch.node_mask].int())
@@ -78,6 +73,14 @@ class LightningNodeGNN(L.LightningModule):
         skew_ratio = num_pos / float(num_total)
         aucpr_min = 1 + ((1 - skew_ratio) * torch.log(torch.tensor(1 - skew_ratio))) / skew_ratio
         aucnpr = (avg_pr - aucpr_min) / (1 - aucpr_min)
+        if self.current_epoch + 1 == self.trainer.max_epochs:
+            normal_scores = masked_anomaly_scores[labels == 0]
+            mu, sigma = merge_gaussians(self.normal_as_mean, self.normal_as_std, normal_scores.mean().item(),
+                                        normal_scores.std(unbiased=False).item(), self.blend_factor)
+            self.normal_as_mean = mu
+            self.normal_as_std = sigma
+            self.anomaly_loss_margin = norm.ppf(1 - skew_ratio / 2, loc=mu, scale=sigma)
+            print(self.anomaly_loss_margin)
         elapsed_time = time.time() - start_time
         self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
         if torch.cuda.is_available():
@@ -184,12 +187,6 @@ class LightningEdgeGNN(L.LightningModule):
         self.log("anomaly_loss", anomaly_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
         total_loss = bce_loss + self.hparams.alpha * anomaly_loss
         self.log("total_loss", total_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
-        if self.current_epoch + 1 == self.trainer.max_epochs:
-            normal_scores = masked_anomaly_scores[labels == 0]
-            mu, sigma = merge_gaussians(self.normal_as_mean, self.normal_as_std, normal_scores.mean().item(),
-                                        normal_scores.std(unbiased=False).item(), self.blend_factor)
-            self.normal_as_mean = mu
-            self.normal_as_std = sigma
         pred_cont = torch.sigmoid(pred)
         avg_pr = self.metric_avgpr(pred_cont, batch.y.int())
         auc_roc = self.metric_auroc(pred_cont, batch.y.int())
@@ -198,6 +195,14 @@ class LightningEdgeGNN(L.LightningModule):
         skew_ratio = num_pos / float(num_total)
         aucpr_min = 1 + ((1 - skew_ratio) * torch.log(torch.tensor(1 - skew_ratio))) / skew_ratio
         aucnpr = (avg_pr - aucpr_min) / (1 - aucpr_min)
+        if self.current_epoch + 1 == self.trainer.max_epochs:
+            normal_scores = masked_anomaly_scores[labels == 0]
+            mu, sigma = merge_gaussians(self.normal_as_mean, self.normal_as_std, normal_scores.mean().item(),
+                                        normal_scores.std(unbiased=False).item(), self.blend_factor)
+            self.normal_as_mean = mu
+            self.normal_as_std = sigma
+            self.anomaly_loss_margin = norm.ppf(1 - skew_ratio / 2, loc=mu, scale=sigma)
+            print(f"Anomaly loss margin:{self.anomaly_loss_margin}")
         elapsed_time = time.time() - start_time
         self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
         if torch.cuda.is_available():

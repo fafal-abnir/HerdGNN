@@ -1,6 +1,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm,intellij+all,data
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm,intellij+all,data
-
+### Test ###
+test/*
 ### Data ###
 experiments/*
 data/*
