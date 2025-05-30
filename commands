@@ -157,7 +157,6 @@ python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_conv1=128 --h
 python3 roland_main.py  --epochs=300 --learning_rate=0.001 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="RedditBody" --graph_window_size="week" --num_windows=100;
 python3 roland_main.py  --epochs=300 --learning_rate=0.001 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="RedditBody" --graph_window_size="week" --num_windows=100;
 ## MOOC
-python3 roland_main.py  --epochs=300 --learning_rate=0.005 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GCN --dataset="MOOC" --graph_window_size="day" --num_windows=100;
-python3 roland_main.py  --epochs=300 --learning_rate=0.005 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="MOOC" --graph_window_size="day" --num_windows=100;
+python3 roland_main.py  --epochs=300 --learning_rate=0.005 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="MOOC" --graph_window_size="day" --num_windows=30;
 ## DGraphFin
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_conv1=128 --hidden_conv2=128 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --num_windows=100;

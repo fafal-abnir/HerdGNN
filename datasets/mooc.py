@@ -61,9 +61,9 @@ class MOOC(InMemoryDataset):
     def process(self) -> None:
         # ['mooc_action_features.tsv', 'mooc_action_labels.tsv', 'mooc_actions.tsv']
         # path = os.path.join(self.raw_dir, "soc-sign-bitcoinotc.csv")
-        feature_path = os.path.join(self.raw_dir,"act-mooc/mooc_action_features.tsv")
-        label_path = os.path.join(self.raw_dir, "act-mooc/mooc_action_labels.tsv")
-        actions_path = os.path.join(self.raw_dir, "act-mooc/mooc_actions.tsv")
+        feature_path = os.path.join(self.raw_dir,"mooc_action_features.tsv")
+        label_path = os.path.join(self.raw_dir, "mooc_action_labels.tsv")
+        actions_path = os.path.join(self.raw_dir, "mooc_actions.tsv")
         df_action_features = pd.read_csv(feature_path, sep="\t")
         df_action_labels = pd.read_csv(label_path, sep="\t")
         df_actions = pd.read_csv(actions_path, sep="\t")

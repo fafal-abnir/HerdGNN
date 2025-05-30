@@ -26,6 +26,7 @@ def get_args():
     parser.add_argument("--gnn_type", type=str, choices=["GIN", "GAT", "GCN"], default="GCN",
                         help="Type of GNN model: GIN, GAT, or GCN (default: GCN)")
     parser.add_argument("--fresh_start", action="store_true", help="retraining from scratch on each timestamp")
+    parser.add_argument("--dropout", type=float, default=0.0, help="dropout rate")
     parser.add_argument("--update_type", type=str, choices=["gru", "mlp", "moving"], default="gru",
                         help="Type of updating node embeddings: gru, mlp, or moving (default: gru)")
     parser.add_argument("--dataset_name", type=str,
@@ -47,6 +48,7 @@ def main():
     gnn_type = args.gnn_type
     update_type = args.update_type
     fresh_start = args.fresh_start
+    dropout = args.dropout
     # Data arguments
     dataset_name = args.dataset_name
     force_reload_dataset = args.force_reload_dataset
@@ -90,6 +92,7 @@ def main():
                 model = RolandGNN(snapshot.x.shape[1], hidden_conv1, hidden_conv2, dataset.num_nodes,
                                   previous_embeddings,
                                   gnn_type=gnn_type,
+                                  dropout=dropout,
                                   update=update_type)
             lightningModule = LightningNodeGNN(model, learning_rate=learning_rate)
             experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_conv1}_{hidden_conv2}/{experiment_datetime}/index_{data_index}"
@@ -151,6 +154,7 @@ def main():
                 model = EdgeRolandGNN(snapshot.x.shape[1], hidden_conv1, hidden_conv2,
                                       dataset.num_nodes, previous_embeddings,
                                       dataset.num_edge_features, gnn_type=gnn_type,
+                                      dropout=dropout,
                                       update=update_type)
             lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate)
             experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_conv1}_{hidden_conv2}/{experiment_datetime}/index_{data_index} "
