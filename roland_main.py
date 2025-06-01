@@ -20,9 +20,8 @@ def get_args():
     parser = argparse.ArgumentParser(description="Roland Training Arguments")
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs (default: 10)")
     parser.add_argument("--learning_rate", type=float, default=0.01, help="learning rate(default:0.001")
-    parser.add_argument("--hidden_conv1", type=int, default=16, help="Size of hidden layers (default: 128)")
-    parser.add_argument("--hidden_conv2", type=int, default=16,
-                        help="Size of memory for evolving weights (default: 128)")
+    parser.add_argument("--num_layers", type=int, default=2, help="Number of layers in roland")
+    parser.add_argument("--hidden_size", type=int, default=16, help="Size of hidden layers (default: 16)")
     parser.add_argument("--gnn_type", type=str, choices=["GIN", "GAT", "GCN"], default="GCN",
                         help="Type of GNN model: GIN, GAT, or GCN (default: GCN)")
     parser.add_argument("--fresh_start", action="store_true", help="retraining from scratch on each timestamp")
@@ -41,8 +40,8 @@ def get_args():
 def main():
     args = get_args()
     # Model arguments
-    hidden_conv1 = args.hidden_conv1
-    hidden_conv2 = args.hidden_conv2
+    num_layers = args.num_layers
+    hidden_size = args.hidden_size
     epochs = args.epochs
     learning_rate = args.learning_rate
     gnn_type = args.gnn_type
@@ -69,9 +68,9 @@ def main():
     for data_index in range(len(dataset) - 1):
         if data_index == 0:
             num_nodes = dataset.num_nodes
-            previous_embeddings = [
-                torch.Tensor([[0 for _ in range(hidden_conv1)] for _ in range(num_nodes)]),
-                torch.Tensor([[0 for _ in range(hidden_conv2)] for _ in range(num_nodes)])]
+            previous_embeddings = [torch.Tensor([[0 for _ in range(hidden_size)] for _ in range(num_nodes)]) for _ in
+                                   range(num_layers)]
+            previous_embeddings = [torch.zeros((num_nodes, hidden_size)) for _ in range(num_layers)]
         snapshot = dataset[data_index]
 
         if task == "Node":
@@ -89,21 +88,21 @@ def main():
             val_data = snapshot.clone()
             val_data.node_mask = val_mask
             if (model is None) or fresh_start:
-                model = RolandGNN(snapshot.x.shape[1], hidden_conv1, hidden_conv2, dataset.num_nodes,
+                model = RolandGNN(snapshot.x.shape[1], num_layers, hidden_size, dataset.num_nodes,
                                   previous_embeddings,
                                   gnn_type=gnn_type,
                                   dropout=dropout,
                                   update=update_type)
             lightningModule = LightningNodeGNN(model, learning_rate=learning_rate)
-            experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_conv1}_{hidden_conv2}/{experiment_datetime}/index_{data_index}"
+            experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_size}/{experiment_datetime}/index_{data_index}"
             csv_logger = CSVLogger(experiments_dir, version="")
             csv_logger.log_hyperparams(vars(args))
             print(f"Time Index: {data_index}, data: {dataset_name}")
             print(train_data)
             print(val_data)
             # Start training
-            train_loader = DataLoader([train_data], batch_size=1)
-            val_loader = DataLoader([val_data], batch_size=1)
+            train_loader = DataLoader([train_data], batch_size=1024)
+            val_loader = DataLoader([val_data], batch_size=1024)
             # early_stop_callback = EarlyStopping(
             #     monitor='val_loss',
             #     mode='min',
@@ -151,21 +150,21 @@ def main():
             val_data.y = snapshot.y[val_idx]
             val_data.edge_attr = snapshot.edge_attr[val_idx]
             if (model is None) or fresh_start:
-                model = EdgeRolandGNN(snapshot.x.shape[1], hidden_conv1, hidden_conv2,
+                model = EdgeRolandGNN(snapshot.x.shape[1], num_layers, hidden_size,
                                       dataset.num_nodes, previous_embeddings,
                                       dataset.num_edge_features, gnn_type=gnn_type,
                                       dropout=dropout,
                                       update=update_type)
             lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate)
-            experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_conv1}_{hidden_conv2}/{experiment_datetime}/index_{data_index} "
+            experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_size}/{experiment_datetime}/index_{data_index}"
             csv_logger = CSVLogger(experiments_dir, version="")
             csv_logger.log_hyperparams(vars(args))
             print(f"Time Index: {data_index}, data: {dataset_name}")
             print(train_data)
             print(val_data)
             # Start training and testing.
-            train_loader = DataLoader([train_data], batch_size=1)
-            val_loader = DataLoader([val_data], batch_size=1)
+            train_loader = DataLoader([train_data], batch_size=1024)
+            val_loader = DataLoader([val_data], batch_size=1024)
             # early_stop_callback = EarlyStopping(
             #     monitor='val_loss',
             #     mode='min',

@@ -50,7 +50,7 @@ class LightningNodeGNN(L.LightningModule):
         num_total = labels.numel()
         num_pos = (labels ==1).sum().item()
         skew_ratio = num_pos/num_total
-        aucpr_min = 1+((1-skew_ratio)*torch.log(1-skew_ratio))/skew_ratio
+        aucpr_min = 1 + ((1 - skew_ratio) * torch.log(torch.tensor(1 - skew_ratio))) / skew_ratio
         aucnpr = (avg_pr-aucpr_min)/(1-aucpr_min)
         elapsed_time = time.time() - start_time
         self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)

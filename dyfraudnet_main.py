@@ -120,7 +120,7 @@ def main():
             # early_stop_callback = EarlyStopping(
             #     monitor='val_avg_pr',
             #     mode='max',
-            #     patience=10
+            #     patience=30
             # )
             # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
             trainer = L.Trainer(default_root_dir=experiments_dir,
