@@ -105,6 +105,16 @@ def main():
                 model = NodeDyFraudNet(snapshot.x.shape[1], memory_size=memory_size, hidden_size=hidden_size,
                                        out_put_size=2, dropout=dropout, num_layers=num_layers,
                                        gnn_type=gnn_type, enable_memory=enable_memory)
+                param_size = 0
+                for param in model.parameters():
+                    param_size += param.nelement() * param.element_size()
+
+                buffer_size = 0
+                for buffer in model.buffers():
+                    buffer_size += buffer.nelement() * buffer.element_size()
+
+                total_size = (param_size + buffer_size) / (1024 ** 2)
+                print(f"Model size (parameters + buffers): {total_size:.2f} MB")
             lightningModule = LightningNodeGNN(model, learning_rate=learning_rate, alpha=alpha,
                                                anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
             csv_logger.log_hyperparams(vars(args))
@@ -205,6 +215,16 @@ def main():
                                        num_layers=num_layers, dropout = dropout,
                                        memory_size=memory_size, hidden_size=hidden_size,
                                        gnn_type=gnn_type, enable_memory=enable_memory)
+                param_size = 0
+                for param in model.parameters():
+                    param_size += param.nelement() * param.element_size()
+
+                buffer_size = 0
+                for buffer in model.buffers():
+                    buffer_size += buffer.nelement() * buffer.element_size()
+
+                total_size = (param_size + buffer_size) / (1024 ** 2)
+                print(f"Model size (parameters + buffers): {total_size:.2f} MB")
             lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate, alpha=alpha,
                                                anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
             # experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/Mem{enable_memory}_{gnn_type}_F{fresh_start}/{experiment_datetime}/index_{data_index}"

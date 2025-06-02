@@ -5,6 +5,8 @@ import copy
 import pytorch_lightning as L
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import CSVLogger
+from torch_geometric.loader import NeighborLoader
+
 from datasets.data_loading import get_dataset
 from torch_geometric.data import DataLoader
 from models.roland.model import RolandGNN, EdgeRolandGNN
@@ -68,8 +70,6 @@ def main():
     for data_index in range(len(dataset) - 1):
         if data_index == 0:
             num_nodes = dataset.num_nodes
-            previous_embeddings = [torch.Tensor([[0 for _ in range(hidden_size)] for _ in range(num_nodes)]) for _ in
-                                   range(num_layers)]
             previous_embeddings = [torch.zeros((num_nodes, hidden_size)) for _ in range(num_layers)]
         snapshot = dataset[data_index]
 
@@ -93,6 +93,16 @@ def main():
                                   gnn_type=gnn_type,
                                   dropout=dropout,
                                   update=update_type)
+                param_size = 0
+                for param in model.parameters():
+                    param_size += param.nelement() * param.element_size()
+
+                buffer_size = 0
+                for buffer in model.buffers():
+                    buffer_size += buffer.nelement() * buffer.element_size()
+
+                total_size = (param_size + buffer_size) / (1024 ** 2)
+                print(f"Model size (parameters + buffers): {total_size:.2f} MB")
             lightningModule = LightningNodeGNN(model, learning_rate=learning_rate)
             experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_size}/{experiment_datetime}/index_{data_index}"
             csv_logger = CSVLogger(experiments_dir, version="")
@@ -101,8 +111,8 @@ def main():
             print(train_data)
             print(val_data)
             # Start training
-            train_loader = DataLoader([train_data], batch_size=1024)
-            val_loader = DataLoader([val_data], batch_size=1024)
+            train_loader = DataLoader([train_data], batch_size=1)
+            val_loader = DataLoader([val_data], batch_size=1)
             # early_stop_callback = EarlyStopping(
             #     monitor='val_loss',
             #     mode='min',
@@ -155,6 +165,16 @@ def main():
                                       dataset.num_edge_features, gnn_type=gnn_type,
                                       dropout=dropout,
                                       update=update_type)
+                param_size = 0
+                for param in model.parameters():
+                    param_size += param.nelement() * param.element_size()
+
+                buffer_size = 0
+                for buffer in model.buffers():
+                    buffer_size += buffer.nelement() * buffer.element_size()
+
+                total_size = (param_size + buffer_size) / (1024 ** 2)
+                print(f"Model size (parameters + buffers): {total_size:.2f} MB")
             lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate)
             experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_size}/{experiment_datetime}/index_{data_index}"
             csv_logger = CSVLogger(experiments_dir, version="")
@@ -163,8 +183,8 @@ def main():
             print(train_data)
             print(val_data)
             # Start training and testing.
-            train_loader = DataLoader([train_data], batch_size=1024)
-            val_loader = DataLoader([val_data], batch_size=1024)
+            train_loader = DataLoader([train_data], batch_size=1)
+            val_loader = DataLoader([val_data], batch_size=1)
             # early_stop_callback = EarlyStopping(
             #     monitor='val_loss',
             #     mode='min',

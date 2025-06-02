@@ -1,10 +1,16 @@
+import gc
 import copy
 import torch
 import argparse
 from datetime import datetime
+
+from torch_geometric.loader import NeighborLoader
+
 from datasets.data_loading import get_dataset
 from utils.visualization import visualize_embeddings
 from torch_geometric.data import DataLoader
+from torch_geometric.transforms import ToUndirected
+from torch_geometric.loader import ClusterData, ClusterLoader
 from pytorch_lightning.loggers import CSVLogger
 from models.hsgad.model import NodeHSGAD
 from models.hsgad.lightning_modules import LightningNodeGNN
@@ -81,25 +87,31 @@ def main():
 
         val_data = snapshot.clone()
         val_data.node_mask = val_mask
-        test_data = copy.deepcopy(dataset[data_index + 1])
-        test_data.num_current_edges = test_data.num_edges
-        test_data.num = test_data.num_nodes
         if snapshot.x is None:
             test_data.x = torch.Tensor([[1] for _ in range(test_data.num_nodes)])
         if (model is None) or fresh_start:
             model = NodeHSGAD(snapshot.x.shape[1], hidden_size=hidden_size,
                               out_put_size=2, dropout=dropout, num_layers=num_layers,
                               gnn_type=gnn_type)
+            param_size = 0
+            for param in model.parameters():
+                param_size += param.nelement() * param.element_size()
+
+            buffer_size = 0
+            for buffer in model.buffers():
+                buffer_size += buffer.nelement() * buffer.element_size()
+
+            total_size = (param_size + buffer_size) / (1024 ** 2)
+            print(f"Model size (parameters + buffers): {total_size:.2f} MB")
         lightningModule = LightningNodeGNN(model, learning_rate=learning_rate, lam=lam)
         csv_logger.log_hyperparams(vars(args))
         print(f"Time Index: {data_index}, data: {dataset_name}")
         print(train_data)
         print(val_data)
-        print(test_data)
         # Start training and testing.
         train_loader = DataLoader([train_data], batch_size=1)
         val_loader = DataLoader([val_data], batch_size=1)
-        test_loader = DataLoader([test_data], batch_size=1)
+
         trainer = L.Trainer(default_root_dir=experiments_dir,
                             accelerator="auto",
                             devices="auto",
@@ -124,6 +136,11 @@ def main():
                                  f'{experiments_dir}/train_embeddings_not_trained.png')
 
         trainer.fit(lightningModule, train_loader, val_loader)
+        test_data = copy.deepcopy(dataset[data_index + 1])
+        print(test_data)
+        test_data.num_current_edges = test_data.num_edges
+        test_data.num = test_data.num_nodes
+        test_loader = DataLoader([test_data], batch_size=1)
         trainer.test(lightningModule, test_loader)
 
         # Visualization embedding
@@ -146,7 +163,9 @@ def main():
                                  f'{experiments_dir}/train_embedding_trained.png')
             visualize_embeddings(test_embeddings_np, test_label_colors, 'None',
                                  f'{experiments_dir}/test_embedding.png')
-
+        del train_data, train_loader, val_data, val_loader, test_data, test_loader, snapshot
+        gc.collect()
+        torch.cuda.empty_cache()
 
 if __name__ == "__main__":
     main()

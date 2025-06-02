@@ -57,7 +57,7 @@ class LightningNodeGNN(L.LightningModule):
         auc_loss = self.auc_loss(zero_embeddings, one_embeddings)
         self.log("auc_loss", auc_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
         # total loss
-        total_loss = nor_loss + self.lam * auc_loss
+        total_loss = nor_loss - self.lam * auc_loss
         self.log("total_loss", total_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
         pred_cont = torch.sigmoid(pred)
         avg_pr = self.metric_avgpr(pred_cont[batch.node_mask], batch.y[batch.node_mask].int())

@@ -406,3 +406,12 @@ python3 roland_main.py  --epochs=100 --learning_rate=0.005 --num_layers=3 --hidd
 python3 roland_main.py  --epochs=100 --learning_rate=0.005 --num_layers=3 --hidden_size=64 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --num_windows=116 --force_reload_dataset;
 python3 roland_main.py  --epochs=100 --learning_rate=0.005 --num_layers=3 --hidden_size=32 --gnn_type=GIN --dataset="DGraphFin" --graph_window_size="week" --num_windows=116 --force_reload_dataset;
 python3 roland_main.py  --epochs=100 --learning_rate=0.005 --num_layers=3 --hidden_size=32 --dropout=0.3 --gnn_type=GIN --dataset="DGgraphFin" --graph_window_size="week" --num_windows=116 --force_reload_dataset;
+
+
+# HSGAD
+python3 hsgad_main.py --epochs=200 --hidden_size=32 --gnn_type=GIN --dataset_name=DGraphFin --graph_window_size=week --num_windows=116 --learning_rate=0.005 --dropout=0.3 --lam=0.5 --num_layers=2;
+python3 hsgad_main.py --epochs=200 --hidden_size=64 --gnn_type=GIN --dataset_name=DGraphFin --graph_window_size=week --num_windows=116 --learning_rate=0.005 --dropout=0.3 --lam=0.5 --num_layers=2;
+python3 hsgad_main.py --epochs=200 --hidden_size=128 --gnn_type=GIN --dataset_name=DGraphFin --graph_window_size=week --num_windows=116 --learning_rate=0.005 --dropout=0.3 --lam=0.5 --num_layers=2;
+python3 hsgad_main.py --epochs=200 --hidden_size=32 --gnn_type=GIN --dataset_name=DGraphFin --graph_window_size=week --num_windows=116 --learning_rate=0.005 --dropout=0.3 --lam=1.0 --num_layers=2;
+python3 hsgad_main.py --epochs=200 --hidden_size=64 --gnn_type=GIN --dataset_name=DGraphFin --graph_window_size=week --num_windows=116 --learning_rate=0.005 --dropout=0.3 --lam=1.0 --num_layers=2;
+python3 hsgad_main.py --epochs=200 --hidden_size=128 --gnn_type=GIN --dataset_name=DGraphFin --graph_window_size=week --num_windows=116 --learning_rate=0.005 --dropout=0.3 --lam=1.0 --num_layers=2;
