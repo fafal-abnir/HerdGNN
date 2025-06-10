@@ -6,14 +6,6 @@ from torch.nn import BCEWithLogitsLoss
 
 import pytorch_lightning as L
 
-
-@dataclass
-class TrainingConfig:
-    learning_rate: float = 0.001
-    metric: str = "torchmetrics.classification.BinaryAveragePrecision"
-    loss_fn: str = "torch.nn.BCEWithLogitsLoss"
-
-
 class LightningNodeGNN(L.LightningModule):
     def __init__(self, model, learning_rate):
         super().__init__()

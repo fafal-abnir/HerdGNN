@@ -124,6 +124,20 @@ class DGraphFin(InMemoryDataset):
                 data_list.append(data)
                 if len(data_list) >= self.num_windows:
                     break
+        # used_node_indices = torch.unique(torch.cat([torch.unique(data.edge_index) for data in data_list]))
+        #
+        # old_to_new = {int(old): new for new, old in enumerate(used_node_indices.tolist())}
+        # num_nodes_new = len(used_node_indices)
+        #
+        # for data in data_list:
+        #     data.edge_index = torch.tensor([
+        #         [old_to_new[int(src)] for src in data.edge_index[0]],
+        #         [old_to_new[int(dst)] for dst in data.edge_index[1]],
+        #     ], dtype=torch.long)
+        #     data.x = data.x[used_node_indices]
+        #     data.y = data.y[used_node_indices]
+        #     data.num_nodes = num_nodes_new
+        #     data.node_mask = data.node_mask[used_node_indices]
         if self.pre_filter is not None:
             data_list = [d for d in data_list if self.pre_filter(d)]
         if self.pre_transform is not None:

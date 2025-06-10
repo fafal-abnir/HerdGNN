@@ -33,7 +33,7 @@ def get_args():
     parser.add_argument("--num_layers", type=int, default=2, help="Number of GNN layers")
     parser.add_argument("--dropout", type=float, default=0.0, help="dropout rate")
     parser.add_argument("--dataset_name", type=str,
-                        choices=["DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle", "RedditBody"], default="RedditTitle")
+                        choices=["EllipticPP","DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle", "RedditBody"], default="RedditTitle")
     parser.add_argument("--force_reload_dataset", action="store_true", help="Force to download the dataset again.")
     parser.add_argument("--graph_window_size", type=str, choices=["day", "week", "month"], default="month",
                         help="the size of graph window size")
@@ -66,9 +66,11 @@ def main():
     num_windows = args.num_windows
     model = None
     experiment_datetime = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    if dataset_name in ["DGraphFin"]:
+    if dataset_name in ["DGraphFin","EllipticPP"]:
         task = "Node"
         lightning_root_dir = "experiments/dyfraudnet/node_level"
+        if dataset_name == "EllipticPP":
+            graph_window_size = "hour"
     else:
         task = "Edge"
         lightning_root_dir = "experiments/dyfraudnet/edge_level"

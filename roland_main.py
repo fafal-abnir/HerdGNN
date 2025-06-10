@@ -31,7 +31,8 @@ def get_args():
     parser.add_argument("--update_type", type=str, choices=["gru", "mlp", "moving"], default="gru",
                         help="Type of updating node embeddings: gru, mlp, or moving (default: gru)")
     parser.add_argument("--dataset_name", type=str,
-                        choices=["DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle", "RedditBody"], default="RedditTitle")
+                        choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle", "RedditBody"],
+                        default="RedditTitle")
     parser.add_argument("--force_reload_dataset", action="store_true", help="Force to download the dataset again.")
     parser.add_argument("--graph_window_size", type=str, choices=["day", "week", "month"], default="month",
                         help="the size of graph window size")
@@ -57,9 +58,11 @@ def main():
     num_windows = args.num_windows
     model = None
     experiment_datetime = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    if dataset_name in ["DGraphFin"]:
+    if dataset_name in ["DGraphFin", "EllipticPP"]:
         task = "Node"
         lightning_root_dir = "experiments/roland/node_level"
+        if dataset_name == "EllipticPP":
+            graph_window_size = "hour"
     else:
         task = "Edge"
         lightning_root_dir = "experiments/roland/edge_level"
