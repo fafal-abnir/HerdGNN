@@ -2,6 +2,8 @@ import gc
 import argparse
 import torch
 import copy
+from termcolor import colored
+from colorama import init
 import pytorch_lightning as L
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import CSVLogger
@@ -16,6 +18,7 @@ from datetime import datetime
 torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = False
 torch.autograd.set_detect_anomaly(True)
+init()
 
 
 def get_args():
@@ -31,13 +34,27 @@ def get_args():
     parser.add_argument("--update_type", type=str, choices=["gru", "mlp", "moving"], default="gru",
                         help="Type of updating node embeddings: gru, mlp, or moving (default: gru)")
     parser.add_argument("--dataset_name", type=str,
-                        choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle", "RedditBody"],
+                        choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle", "RedditBody", "SAMLSim"],
                         default="RedditTitle")
     parser.add_argument("--force_reload_dataset", action="store_true", help="Force to download the dataset again.")
     parser.add_argument("--graph_window_size", type=str, choices=["day", "week", "month"], default="month",
                         help="the size of graph window size")
     parser.add_argument("--num_windows", type=int, default=10, help="Number of windows for running the experiment")
     return parser.parse_args()
+
+
+def count_model_elements(model):
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    buffers = sum(b.numel() for b in model.buffers())
+
+    return {
+        "total_params": total_params,
+        "trainable_params": trainable_params,
+        "frozen_params": total_params - trainable_params,
+        "buffers": buffers,
+        "all_state_dict": total_params + buffers,
+    }
 
 
 def main():
@@ -68,8 +85,7 @@ def main():
         lightning_root_dir = "experiments/roland/edge_level"
     dataset = get_dataset(name=dataset_name, force_reload=force_reload_dataset, edge_window_size=graph_window_size,
                           num_windows=num_windows)
-    print(f"Number of windows: {len(dataset)}")
-
+    print(colored(f"Number of windows: {len(dataset)}", "blue"))
     for data_index in range(len(dataset) - 1):
         if data_index == 0:
             num_nodes = dataset.num_nodes
@@ -105,12 +121,13 @@ def main():
                     buffer_size += buffer.nelement() * buffer.element_size()
 
                 total_size = (param_size + buffer_size) / (1024 ** 2)
+                print(colored(count_model_elements(model), "green"))
                 print(f"Model size (parameters + buffers): {total_size:.2f} MB")
             lightningModule = LightningNodeGNN(model, learning_rate=learning_rate)
             experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_size}/{experiment_datetime}/index_{data_index}"
             csv_logger = CSVLogger(experiments_dir, version="")
             csv_logger.log_hyperparams(vars(args))
-            print(f"Time Index: {data_index}, data: {dataset_name}")
+            print(colored(f"Time Index: {data_index}, data: {dataset_name}", "yellow"))
             print(train_data)
             print(val_data)
             # Start training
@@ -122,12 +139,21 @@ def main():
             #     patience=10
             # )
             # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
+            checkpoint_callback = ModelCheckpoint(
+                monitor="val_avg_pr",
+                mode="max",
+                save_top_k=1,
+                save_weights_only=True,
+                dirpath=experiments_dir,
+                filename="best-checkpoint"
+            )
             trainer = L.Trainer(default_root_dir=experiments_dir,
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,
                                 logger=csv_logger,
-                                max_epochs=epochs
+                                max_epochs=epochs,
+                                callbacks=[checkpoint_callback]
                                 )
             trainer.fit(lightningModule, train_loader, val_loader)
             _, previous_embeddings = lightningModule.forward(train_data)
@@ -139,6 +165,8 @@ def main():
             test_loader = DataLoader([test_data], batch_size=1)
             print(test_data)
             trainer.test(lightningModule, test_loader)
+            model.set_tau((test_data.edge_index.size(1) + 1e-8) / (
+                    train_data.edge_index.size(1) + test_data.edge_index.size(1) + 1e-8))
             del train_data, train_loader, val_data, val_loader, test_data, test_loader, snapshot, previous_embeddings
             gc.collect()
             torch.cuda.empty_cache()
@@ -176,6 +204,7 @@ def main():
                 for buffer in model.buffers():
                     buffer_size += buffer.nelement() * buffer.element_size()
 
+                print(colored(count_model_elements(model), "green"))
                 total_size = (param_size + buffer_size) / (1024 ** 2)
                 print(f"Model size (parameters + buffers): {total_size:.2f} MB")
             lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate)
@@ -194,12 +223,21 @@ def main():
             #     patience=10
             # )
             # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
+            checkpoint_callback = ModelCheckpoint(
+                monitor="val_avg_pr",
+                mode="max",
+                save_top_k=1,
+                save_weights_only=True,
+                dirpath=experiments_dir,
+                filename="best-checkpoint"
+            )
             trainer = L.Trainer(default_root_dir=experiments_dir,
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,
                                 logger=csv_logger,
-                                max_epochs=epochs
+                                max_epochs=epochs,
+                                callbacks=[checkpoint_callback]
                                 )
             trainer.fit(lightningModule, train_loader, val_loader)
             _, previous_embeddings = lightningModule.forward(train_data)
@@ -212,6 +250,8 @@ def main():
             print(test_data)
             test_loader = DataLoader([test_data], batch_size=1)
             trainer.test(lightningModule, test_loader)
+            model.set_tau((test_data.edge_index.size(1) + 1e-8) / (
+                    train_data.edge_index.size(1) + test_data.edge_index.size(1) + 1e-8))
             del train_data, val_data, test_data, snapshot, previous_embeddings
             gc.collect()
             torch.cuda.empty_cache()

@@ -6,11 +6,14 @@ from datasets.mooc import MOOC
 from datasets.reddit_body import RedditBody
 from datasets.reddit_title import RedditTtile
 from datasets.ellipticpp import EllipticPP
+from datasets.ethereum_phishing import EthereumPhishing
+from datasets.saml_sim import SAMLSim
 
 
 def get_dataset(root: str = "./data",
                 name: Literal[
-                    "EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle", "RedditBody"] = "BitcoinOTC",
+                    "EllipticPP", "DGraphFin", "BitcoinOTC",
+                    "MOOC", "RedditTitle", "RedditBody", "EthereumPhishing", "SAMLSim"] = "BitcoinOTC",
                 edge_window_size: Literal["day", "week", "month"] = "week", num_windows: int = 30, force_reload=True):
     if name == "DGraphFin":
         return DGraphFin(root=f"{root}/DGraphFin", edge_window_size=edge_window_size, num_windows=num_windows,
@@ -28,5 +31,12 @@ def get_dataset(root: str = "./data",
     elif name == "RedditTitle":
         return RedditTtile(root=f"{root}/RedditTitle", edge_window_size=edge_window_size, num_windows=num_windows,
                            force_reload=force_reload)
+    elif name == "EthereumPhishing":
+        return EthereumPhishing(root=f"{root}/EthereumPhishing", edge_window_size=edge_window_size,
+                                num_windows=num_windows,
+                                force_reload=force_reload)
+    elif name == "SAMLSim":
+        return SAMLSim(root=f"{root}/SAMLSim", edge_window_size=edge_window_size, num_windows=num_windows,
+                       force_reload=force_reload)
     else:
         raise RuntimeError(f"Wrong dataset name:{name}")

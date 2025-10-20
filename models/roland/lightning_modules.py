@@ -33,10 +33,19 @@ class LightningNodeGNN(L.LightningModule):
 
     def _shared_step(self, batch):
         start_time = time.time()
-        pred, _ = self.forward(batch)
-        loss = self.loss_fn(pred[batch.node_mask], batch.y[batch.node_mask].type_as(pred))
-        pred_cont = torch.sigmoid(pred)
+        mask = batch.node_mask
         labels = batch.y[batch.node_mask]
+        num_pos = (labels == 1).sum().float()
+        num_neg = (labels == 0).sum().float()
+        pos_weight = num_neg / (num_pos + 1e-6)
+
+        pred, _ = self.forward(batch)
+        # classification loss
+        loss_fn = BCEWithLogitsLoss(pos_weight=pos_weight)
+        bce_loss = loss_fn(pred[mask], labels.type_as(pred))
+        self.log("bce_loss", bce_loss, on_step=False, on_epoch=True, prog_bar=True, logger=False)
+
+        pred_cont = torch.sigmoid(pred)
         auc_roc = self.metric_auroc(pred_cont[batch.node_mask], batch.y[batch.node_mask].int())
         avg_pr = self.metric_avgpr(pred_cont[batch.node_mask], batch.y[batch.node_mask].int())
         num_total = labels.numel()
@@ -52,7 +61,7 @@ class LightningNodeGNN(L.LightningModule):
             self.log("gpu_memory_allocated_MB", memory_allocated, prog_bar=True, on_step=False, on_epoch=True)
             self.log("gpu_memory_reserved_MB", memory_reserved, prog_bar=True, on_step=False, on_epoch=True)
 
-        return loss, avg_pr, aucnpr, auc_roc
+        return bce_loss, avg_pr, aucnpr, auc_roc
 
     def training_step(self, batch, batch_idx):
         loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
@@ -118,9 +127,14 @@ class LightningEdgeGNN(L.LightningModule):
 
     def _shared_step(self, batch):
         start_time = time.time()
+        labels = batch.y
+        num_pos = (labels == 1).sum().float()
+        num_neg = (labels == 0).sum().float()
+        pos_weight = num_neg / (num_pos + 1e-6)
         pred, _ = self.forward(batch)
-        loss = self.loss_fn(pred, batch.y.type_as(pred))
-        labels =  batch.y
+        # classification loss
+        loss_fn = BCEWithLogitsLoss(pos_weight=pos_weight)
+        bce_loss = loss_fn(pred, labels.type_as(pred))
         pred_cont = torch.sigmoid(pred)
         avg_pr = self.metric_avgpr(pred_cont, batch.y.int())
         auc_roc = self.metric_auroc(pred_cont, batch.y.int())
@@ -137,7 +151,7 @@ class LightningEdgeGNN(L.LightningModule):
             self.log("gpu_memory_allocated_MB", memory_allocated, prog_bar=True, on_step=False, on_epoch=True)
             self.log("gpu_memory_reserved_MB", memory_reserved, prog_bar=True, on_step=False, on_epoch=True)
 
-        return loss, avg_pr, aucnpr, auc_roc
+        return bce_loss, avg_pr, aucnpr, auc_roc
 
     def training_step(self, batch, batch_idx):
         loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)

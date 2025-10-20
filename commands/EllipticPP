@@ -1,0 +1,55 @@
+# DyFraudNet
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.00 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --force_reload_dataset;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.00 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.00 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.00 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory --fresh_start;
+
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.00 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.00 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.00 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.00 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory --fresh_start;
+
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=1.0 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --force_reload_dataset;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=1.0 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=1.0 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=1.0 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory --fresh_start;
+
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=1.0 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=1.0 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=1.0 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=1.0 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory --fresh_start;
+
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --force_reload_dataset;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory --fresh_start;
+
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory --fresh_start;
+
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=1.0 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --force_reload_dataset;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=1.0 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=1.0 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=1.0 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory --fresh_start;
+
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=1.0 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=1.0 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=1.0 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=1.0 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory --fresh_start;
+
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=0.9 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --force_reload_dataset;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=0.9 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=0.9 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=0.9 --dropout=0.0 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory --fresh_start;
+
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=0.9 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=0.9 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=0.9 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --fresh_start;
+python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=0.9 --dropout=0.2 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --enable_memory --fresh_start;
+
+# Roland
+python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=mlp --dataset="EllipticPP" --num_windows=49;
+python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=gru --dataset="EllipticPP" --num_windows=49;
+python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=moving --dataset="EllipticPP" --num_windows=49;

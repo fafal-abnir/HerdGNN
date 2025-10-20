@@ -54,6 +54,7 @@ class RolandGNN(torch.nn.Module):
         self.dropout = dropout
         # Update layer
         self.update = update
+        self.register_buffer("tau", torch.tensor([0.0]))
         if self.update == "moving":
             self.tau = torch.Tensor([0])
         elif self.update == "gru":
@@ -71,6 +72,11 @@ class RolandGNN(torch.nn.Module):
             for i, emb in enumerate(previous_embeddings):
                 getattr(self, f"previous_embeddings{i}").copy_(emb.clone().detach())
 
+    def set_tau(self, new_tau):
+        if not hasattr(self, "tau"):
+            raise AttributeError("Tau is not defined for this update type.")
+        self.tau.fill_(new_tau)
+
     def reset_parameters(self):
         for conv in self.convs:
             conv.reset_parameters()
@@ -78,6 +84,7 @@ class RolandGNN(torch.nn.Module):
 
     def forward(self, x, edge_index):
         current_embeddings = [torch.Tensor([]) for _ in range(self.num_layers)]
+
         # Preprocess step
         h = self.preprocess1(x)
         h = F.leaky_relu(h, inplace=False)
@@ -130,12 +137,13 @@ class EdgeRolandGNN(torch.nn.Module):
         self.dropout = dropout
         # Update layer
         self.update = update
+        self.register_buffer("tau", torch.tensor([0.0]))
         if self.update == "moving":
             self.tau = torch.Tensor([0])
         elif self.update == "gru":
             self.gru_cells = nn.ModuleList([GRUCell(self.hidden_size, self.hidden_size) for _ in range(self.num_layers)])
         elif self.update == "mlp":
-            self.mlp_layers = nn.ModuleList([pyg_nn.Linear(self.hidden_conv1 * 2, self.hidden_conv1) for _ in range(self.num_layers)])
+            self.mlp_layers = nn.ModuleList([pyg_nn.Linear(self.hidden_size * 2, self.hidden_size) for _ in range(self.num_layers)])
         else:
             assert (0 <= self.update <= 1)
             self.tau = torch.Tensor([self.update])
@@ -148,6 +156,11 @@ class EdgeRolandGNN(torch.nn.Module):
                 # print(i,emb)
                 getattr(self, f"previous_embeddings{i}").copy_(emb.clone().detach())
 
+    def set_tau(self, new_tau):
+        if not hasattr(self, "tau"):
+            raise AttributeError("Tau is not defined for this update type.")
+        self.tau.fill_(new_tau)
+
     def reset_parameters(self):
         for conv in self.convs:
             conv.reset_parameters()
@@ -155,8 +168,6 @@ class EdgeRolandGNN(torch.nn.Module):
 
     def forward(self, x, edge_index, edge_label_index, edge_attr, num_current_edges=None,
                 num_previous_edges=None):
-        if self.update == "moving" and num_current_edges is not None and num_previous_edges is not None:
-            self.tau = torch.Tensor([num_previous_edges / (num_previous_edges + num_current_edges)]).clone()
         current_embeddings = [torch.Tensor([]) for _ in range(self.num_layers)]
         # Preprocess step
         h = self.preprocess1(x)

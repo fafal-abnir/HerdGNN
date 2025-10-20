@@ -1,5 +1,7 @@
 import argparse
 import torch
+from termcolor import colored
+from colorama import init
 import copy
 import pytorch_lightning as L
 from pytorch_lightning.callbacks import ModelCheckpoint, DeviceStatsMonitor, EarlyStopping
@@ -14,7 +16,7 @@ from utils.visualization import visualize_embeddings
 torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = False
 torch.autograd.set_detect_anomaly(True)
-
+init()
 
 def get_args():
     parser = argparse.ArgumentParser(description="DyFraudNetGNN Training Arguments")
@@ -33,7 +35,8 @@ def get_args():
     parser.add_argument("--num_layers", type=int, default=2, help="Number of GNN layers")
     parser.add_argument("--dropout", type=float, default=0.0, help="dropout rate")
     parser.add_argument("--dataset_name", type=str,
-                        choices=["EllipticPP","DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle", "RedditBody"], default="RedditTitle")
+                        choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle",
+                                 "RedditBody", "EthereumPhishing", "SAMLSim"], default="RedditTitle")
     parser.add_argument("--force_reload_dataset", action="store_true", help="Force to download the dataset again.")
     parser.add_argument("--graph_window_size", type=str, choices=["day", "week", "month"], default="month",
                         help="the size of graph window size")
@@ -41,6 +44,20 @@ def get_args():
     parser.add_argument("--embedding_visualization", action="store_true",
                         help="Visualization of train data before and after training")
     return parser.parse_args()
+
+
+def count_model_elements(model):
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    buffers = sum(b.numel() for b in model.buffers())
+
+    return {
+        "total_params": total_params,
+        "trainable_params": trainable_params,
+        "frozen_params": total_params - trainable_params,
+        "buffers": buffers,
+        "all_state_dict": total_params + buffers,
+    }
 
 
 def main():
@@ -66,7 +83,7 @@ def main():
     num_windows = args.num_windows
     model = None
     experiment_datetime = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    if dataset_name in ["DGraphFin","EllipticPP"]:
+    if dataset_name in ["DGraphFin", "EllipticPP", "EthereumPhishing"]:
         task = "Node"
         lightning_root_dir = "experiments/dyfraudnet/node_level"
         if dataset_name == "EllipticPP":
@@ -76,7 +93,7 @@ def main():
         lightning_root_dir = "experiments/dyfraudnet/edge_level"
     dataset = get_dataset(name=dataset_name, force_reload=force_reload_dataset, edge_window_size=graph_window_size,
                           num_windows=num_windows)
-    print(f"Number of windows: {len(dataset)}")
+    print(colored(f"Number of windows: {len(dataset)}","blue"))
     for data_index in range(len(dataset) - 1):
         snapshot = dataset[data_index]
         if snapshot.x is None:
@@ -116,11 +133,12 @@ def main():
                     buffer_size += buffer.nelement() * buffer.element_size()
 
                 total_size = (param_size + buffer_size) / (1024 ** 2)
+                print(colored(count_model_elements(model)), "green")
                 print(f"Model size (parameters + buffers): {total_size:.2f} MB")
             lightningModule = LightningNodeGNN(model, learning_rate=learning_rate, alpha=alpha,
                                                anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
             csv_logger.log_hyperparams(vars(args))
-            print(f"Time Index: {data_index}, data: {dataset_name}")
+            print(colored(f"Time Index: {data_index}, data: {dataset_name}", "yellow"))
             print(train_data)
             print(val_data)
             print(test_data)
@@ -134,13 +152,22 @@ def main():
             #     mode='max',
             #     patience=30
             # )
+            checkpoint_callback = ModelCheckpoint(
+                monitor="val_avg_pr",
+                mode="max",
+                save_top_k=1,
+                save_weights_only=True,
+                dirpath=experiments_dir,
+                filename="best-checkpoint"
+            )
             # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
             trainer = L.Trainer(default_root_dir=experiments_dir,
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,
                                 logger=csv_logger,
-                                max_epochs=epochs
+                                max_epochs=epochs,
+                                callbacks=[checkpoint_callback]
                                 )
             # Visualization embedding before training
             if embedding_visualization:
@@ -214,7 +241,7 @@ def main():
                 test_data.x = torch.Tensor([[1] for _ in range(test_data.num_nodes)])
             if (model is None) or fresh_start:
                 model = EdgeDyFraudNet(snapshot.x.shape[1], edge_attr_dim=dataset.num_edge_features,
-                                       num_layers=num_layers, dropout = dropout,
+                                       num_layers=num_layers, dropout=dropout,
                                        memory_size=memory_size, hidden_size=hidden_size,
                                        gnn_type=gnn_type, enable_memory=enable_memory)
                 param_size = 0
@@ -226,13 +253,14 @@ def main():
                     buffer_size += buffer.nelement() * buffer.element_size()
 
                 total_size = (param_size + buffer_size) / (1024 ** 2)
+                print(colored(count_model_elements(model)), "green")
                 print(f"Model size (parameters + buffers): {total_size:.2f} MB")
             lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate, alpha=alpha,
                                                anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
             # experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/Mem{enable_memory}_{gnn_type}_F{fresh_start}/{experiment_datetime}/index_{data_index}"
             # csv_logger = CSVLogger(experiments_dir, version="")
             csv_logger.log_hyperparams(vars(args))
-            print(f"Time Index: {data_index}, data: {dataset_name}")
+            print(colored(f"Time Index: {data_index}, data: {dataset_name}", "yellow"))
             print(train_data)
             print(val_data)
             print(test_data)
@@ -246,13 +274,22 @@ def main():
             #     mode='max',
             #     patience=10
             # )
+            checkpoint_callback = ModelCheckpoint(
+                monitor="val_avg_pr",
+                mode="max",
+                save_top_k=1,
+                save_weights_only=True,
+                dirpath=experiments_dir,
+                filename="best-checkpoint"
+            )
             # model_checkpoint = ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_avg_pr")
             trainer = L.Trainer(default_root_dir=experiments_dir,
                                 accelerator="auto",
                                 devices="auto",
                                 enable_progress_bar=True,
                                 logger=csv_logger,
-                                max_epochs=epochs
+                                max_epochs=epochs,
+                                callbacks=[checkpoint_callback]
                                 )
             # Visualization embedding before training
             if embedding_visualization:

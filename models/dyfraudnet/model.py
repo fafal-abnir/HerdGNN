@@ -6,9 +6,6 @@ import torch.nn.functional as F
 from torch.nn import Linear, GRU
 
 
-# gnn_layer_by_name = {"GCN": geom_nn.GCNConv, "GAT": geom_nn.GATConv, "GraphConv": geom_nn.GraphConv}
-
-
 class NodeDyFraudNet(nn.Module):
     def __init__(self, input_dim, memory_size=16, hidden_size=16, out_put_size=2, enable_memory=True, gnn_type="GCN",
                  num_layers=2,

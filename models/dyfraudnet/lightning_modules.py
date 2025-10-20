@@ -54,9 +54,14 @@ class LightningNodeGNN(L.LightningModule):
         start_time = time.time()
         mask = batch.node_mask
         labels = batch.y[mask]
+        num_pos = (labels == 1).sum().float()
+        num_neg = (labels == 0).sum().float()
+        pos_weight = num_neg / (num_pos + 1e-6)
+
         pred, anomaly_scores, _ = self.forward(batch)
         # classification loss
-        bce_loss = self.loss_fn(pred[mask], labels.type_as(pred))
+        loss_fn = BCEWithLogitsLoss(pos_weight=pos_weight)
+        bce_loss = loss_fn(pred[mask], labels.type_as(pred))
         # anomaly loss
         masked_anomaly_scores = anomaly_scores[mask]
         anomaly_loss = self.anomaly_loss(masked_anomaly_scores, labels, self.anomaly_loss_margin)
@@ -176,9 +181,14 @@ class LightningEdgeGNN(L.LightningModule):
         # mask = batch.node_mask
         # labels = batch.y[mask]
         labels = batch.y
+        num_pos = (labels == 1).sum().float()
+        num_neg = (labels == 0).sum().float()
+        pos_weight = num_neg / (num_pos + 1e-6)
         pred, anomaly_scores, _ = self.forward(batch)
         # classification loss
-        bce_loss = self.loss_fn(pred, labels.type_as(pred))
+        loss_fn = BCEWithLogitsLoss(pos_weight=pos_weight)
+        bce_loss = loss_fn(pred, labels.type_as(pred))
+        # bce_loss = self.loss_fn(pred, labels.type_as(pred))
         # anomaly loss
         masked_anomaly_scores = anomaly_scores
         anomaly_loss = self.anomaly_loss(masked_anomaly_scores, labels, self.anomaly_loss_margin)
