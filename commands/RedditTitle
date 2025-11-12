@@ -89,3 +89,12 @@ python3 roland_main.py  --epochs=200 --learning_rate=0.0001 --hidden_size=128 --
 python3 roland_main.py  --epochs=200 --learning_rate=0.01 --hidden_size=128 --gnn_type=GIN --update_type=moving --dataset=RedditTitle --graph_window_size=week --num_windows=178;
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=moving --dataset=RedditTitle --graph_window_size=week --num_windows=178;
 python3 roland_main.py  --epochs=200 --learning_rate=0.0001 --hidden_size=128 --gnn_type=GIN --update_type=moving --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+#HawkGNN
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --num_layers=1 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --num_layers=1 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --num_layers=1 --use_bn --dropout=0.1 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --num_layers=1 --use_bn --dropout=0.1 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --num_layers=2 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --num_layers=2 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --num_layers=2 --use_bn --dropout=0.1 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --num_layers=2 --use_bn --dropout=0.1 --dataset=RedditTitle --graph_window_size=week --num_windows=178;

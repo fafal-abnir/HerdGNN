@@ -43,3 +43,9 @@ python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=gru --dataset=SAMLSim --graph_window_size=week --num_windows=46;
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=mlp --dataset=SAMLSim --graph_window_size=week --num_windows=46;
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=moving --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+#HawkGNN
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --use_bn --dropout=0.1 --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --use_bn --dropout=0.1 --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+

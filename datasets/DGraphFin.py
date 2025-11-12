@@ -114,7 +114,7 @@ class DGraphFin(InMemoryDataset):
                 data.y = torch.tensor(y, dtype=torch.long)
                 edge_index = torch.tensor(filtered_edge_index, dtype=torch.long)
                 data.edge_index = edge_index.t()
-                data.edge_attr = torch.tensor(filtered_edge_type, dtype=torch.long),
+                data.edge_attr = torch.tensor(filtered_edge_type, dtype=torch.long)
                 available_nodes = torch.unique(edge_index)
                 data.num_nodes = available_nodes.size(0)
                 node_mask = torch.zeros(x.shape[0], dtype=torch.bool)

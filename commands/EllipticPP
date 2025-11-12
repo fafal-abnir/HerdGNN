@@ -53,3 +53,15 @@ python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blen
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=mlp --dataset="EllipticPP" --num_windows=49;
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=gru --dataset="EllipticPP" --num_windows=49;
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=moving --dataset="EllipticPP" --num_windows=49;
+
+# HawkGNN
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --num_layers=1 --gnn_type=GCN --dataset="EllipticPP" --num_windows=49;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --num_layers=1 --gnn_type=GCN --use_bn --dropout=0.1 --dataset="EllipticPP" --num_windows=49;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --num_layers=1 --gnn_type=GCN --use_bn --dataset="EllipticPP" --num_windows=49;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --num_layers=1 --gnn_type=GCN --dropout=0.1  --dataset="EllipticPP" --num_windows=49;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --num_layers=1 --gnn_type=GAT --dataset="EllipticPP" --num_windows=49;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --num_layers=1 --gnn_type=GAT --use_bn --dropout=0.1 --dataset="EllipticPP" --num_windows=49;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --num_layers=1 --gnn_type=GAT --use_bn --dataset="EllipticPP" --num_windows=49;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --num_layers=1 --gnn_type=GAT --dropout=0.1  --dataset="EllipticPP" --num_windows=49;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --num_layers=2 --gnn_type=GCN --use_bn --dropout=0.1 --dataset="EllipticPP" --num_windows=49;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --num_layers=2 --gnn_type=GAT --use_bn --dropout=0.1 --dataset="EllipticPP" --num_windows=49;

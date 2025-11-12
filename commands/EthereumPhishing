@@ -43,3 +43,8 @@ python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=EthereumPh
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=gru --dataset=EthereumPhishing --graph_window_size=month --num_windows=20;
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=mlp --dataset=EthereumPhishing --graph_window_size=month --num_windows=20;
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=moving --dataset=EthereumPhishing --graph_window_size=month --num_windows=20;
+#HawkGNN
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --dataset=EthereumPhishing --graph_window_size=month --num_windows=20;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --dataset=EthereumPhishing --graph_window_size=month --num_windows=20;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --use_bn --dropout=0.1 --dataset=EthereumPhishing --graph_window_size=month --num_windows=20;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --use_bn --dropout=0.1 --dataset=EthereumPhishing --graph_window_size=month --num_windows=20;
