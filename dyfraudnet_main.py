@@ -3,6 +3,7 @@ import torch
 from termcolor import colored
 from colorama import init
 import copy
+import gc
 import pytorch_lightning as L
 from pytorch_lightning.callbacks import ModelCheckpoint, DeviceStatsMonitor, EarlyStopping
 from pytorch_lightning.loggers import CSVLogger
@@ -35,8 +36,9 @@ def get_args():
     parser.add_argument("--num_layers", type=int, default=2, help="Number of GNN layers")
     parser.add_argument("--dropout", type=float, default=0.0, help="dropout rate")
     parser.add_argument("--dataset_name", type=str,
-                        choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle",
-                                 "RedditBody", "EthereumPhishing", "SAMLSim"], default="RedditTitle")
+                        choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC",
+                                 "RedditTitle", "RedditBody", "EthereumPhishing", "SAMLSim",
+                                 "AMLWorldLarge", "AMLWorldMedium", "AMLWorldSmall"], default="RedditTitle")
     parser.add_argument("--force_reload_dataset", action="store_true", help="Force to download the dataset again.")
     parser.add_argument("--graph_window_size", type=str, choices=["day", "week", "month"], default="month",
                         help="the size of graph window size")
@@ -133,7 +135,7 @@ def main():
                     buffer_size += buffer.nelement() * buffer.element_size()
 
                 total_size = (param_size + buffer_size) / (1024 ** 2)
-                print(colored(count_model_elements(model)), "green")
+                print(colored(count_model_elements(model), "green"))
                 print(f"Model size (parameters + buffers): {total_size:.2f} MB")
             lightningModule = LightningNodeGNN(model, learning_rate=learning_rate, alpha=alpha,
                                                anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
@@ -208,6 +210,9 @@ def main():
                                      f'{experiments_dir}/train_embedding_trained.png')
                 visualize_embeddings(test_embeddings_np, test_label_colors, 'None',
                                      f'{experiments_dir}/test_embedding.png')
+            del train_data, train_loader, val_data, val_loader, test_data, test_loader, snapshot
+            gc.collect()
+            torch.cuda.empty_cache()
 
         else:
 
@@ -253,7 +258,7 @@ def main():
                     buffer_size += buffer.nelement() * buffer.element_size()
 
                 total_size = (param_size + buffer_size) / (1024 ** 2)
-                print(colored(count_model_elements(model)), "green")
+                print(colored(count_model_elements(model), "green"))
                 print(f"Model size (parameters + buffers): {total_size:.2f} MB")
             lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate, alpha=alpha,
                                                anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
@@ -329,6 +334,9 @@ def main():
                                      f'{experiments_dir}/train_embedding_trained.png')
                 visualize_embeddings(test_embeddings_np, test_label_colors, 'None',
                                      f'{experiments_dir}/test_embedding.png')
+            del train_data, train_loader, val_data, val_loader, test_data, test_loader, snapshot
+            gc.collect()
+            torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":

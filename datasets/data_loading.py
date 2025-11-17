@@ -8,12 +8,14 @@ from datasets.reddit_title import RedditTtile
 from datasets.ellipticpp import EllipticPP
 from datasets.ethereum_phishing import EthereumPhishing
 from datasets.saml_sim import SAMLSim
+from datasets.aml_world_large import AMLWorld
 
 
 def get_dataset(root: str = "./data",
                 name: Literal[
                     "EllipticPP", "DGraphFin", "BitcoinOTC",
-                    "MOOC", "RedditTitle", "RedditBody", "EthereumPhishing", "SAMLSim"] = "BitcoinOTC",
+                    "MOOC", "RedditTitle", "RedditBody", "EthereumPhishing",
+                    "SAMLSim", "AMLWorldLarge", "AMLWorldMedium", "AMLWorldSmall"] = "BitcoinOTC",
                 edge_window_size: Literal["day", "week", "month"] = "week", num_windows: int = 30, force_reload=True):
     if name == "DGraphFin":
         return DGraphFin(root=f"{root}/DGraphFin", edge_window_size=edge_window_size, num_windows=num_windows,
@@ -38,5 +40,17 @@ def get_dataset(root: str = "./data",
     elif name == "SAMLSim":
         return SAMLSim(root=f"{root}/SAMLSim", edge_window_size=edge_window_size, num_windows=num_windows,
                        force_reload=force_reload)
+    elif name == "AMLWorldLarge":
+        return AMLWorld(root=f"{root}/AMLWorld", data_size="Large", illicit_level="HI",
+                             edge_window_size=edge_window_size, num_windows=num_windows,
+                             force_reload=force_reload)
+    elif name == "AMLWorldMedium":
+        return AMLWorld(root=f"{root}/AMLWorld", data_size="Medium", illicit_level="HI",
+                             edge_window_size=edge_window_size, num_windows=num_windows,
+                             force_reload=force_reload)
+    elif name == "AMLWorldSmall":
+        return AMLWorld(root=f"{root}/AMLWorld", data_size="Small", illicit_level="HI",
+                             edge_window_size=edge_window_size, num_windows=num_windows,
+                             force_reload=force_reload)
     else:
         raise RuntimeError(f"Wrong dataset name:{name}")

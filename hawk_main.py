@@ -34,8 +34,9 @@ def get_args():
     parser.add_argument("--use_bn", action="store_true")
     parser.add_argument("--dropout", type=float, default=0.0, help="dropout rate")
     parser.add_argument("--dataset_name", type=str,
-                        choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle",
-                                 "RedditBody", "EthereumPhishing", "SAMLSim"], default="RedditTitle")
+                        choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC",
+                                 "RedditTitle", "RedditBody", "EthereumPhishing", "SAMLSim",
+                                 "AMLWorldLarge", "AMLWorldMedium", "AMLWorldSmall"], default="RedditTitle")
     parser.add_argument("--force_reload_dataset", action="store_true", help="Force to download the dataset again.")
     parser.add_argument("--hawk_window_size", type=int, default=6,
                         help="Length of window for hawkGNN training(T is for test, T-1 for val, the rest for train)")

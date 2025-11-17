@@ -10,6 +10,7 @@ from datasets.data_loading import get_dataset
 from torch_geometric.data import DataLoader
 from models.dyfraudnet.model import NodeDyFraudNet, EdgeDyFraudNet
 from models.roland.model import RolandGNN, EdgeRolandGNN
+from models.hawkes.model import NodeHawkGNN, EdgeHawkGNN
 from models.dyfraudnet.lightning_modules import LightningNodeGNN, LightningEdgeGNN
 from datetime import datetime
 from utils.visualization import visualize_embeddings
@@ -18,6 +19,7 @@ torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = False
 torch.autograd.set_detect_anomaly(True)
 init()
+
 
 def get_args():
     parser = argparse.ArgumentParser(description="DyFraudNetGNN Training Arguments")
@@ -36,8 +38,9 @@ def get_args():
     parser.add_argument("--num_layers", type=int, default=2, help="Number of GNN layers")
     parser.add_argument("--dropout", type=float, default=0.0, help="dropout rate")
     parser.add_argument("--dataset_name", type=str,
-                        choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC", "RedditTitle",
-                                 "RedditBody", "EthereumPhishing", "SAMLSim"], default="RedditTitle")
+                        choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC",
+                                 "RedditTitle", "RedditBody", "EthereumPhishing", "SAMLSim",
+                                 "AMLWorldLarge", "AMLWorldMedium", "AMLWorldSmall"], default="RedditTitle")
     parser.add_argument("--force_reload_dataset", action="store_true", help="Force to download the dataset again.")
     parser.add_argument("--graph_window_size", type=str, choices=["day", "week", "month"], default="month",
                         help="the size of graph window size")
@@ -74,6 +77,7 @@ def print_model_params(model):
     total_size = (param_size + buffer_size) / (1024 ** 2)
     print(f"Model size (parameters + buffers): {total_size:.2f} MB")
 
+
 def main():
     args = get_args()
     # Model arguments
@@ -97,18 +101,16 @@ def main():
     num_windows = args.num_windows
     model = None
     experiment_datetime = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    print(colored(f"Code params:{vars(args)}","yellow"))
+    print(colored(f"Code params:{vars(args)}", "yellow"))
     if dataset_name in ["DGraphFin", "EllipticPP", "EthereumPhishing"]:
         task = "Node"
-        lightning_root_dir = "experiments/dyfraudnet/node_level"
         if dataset_name == "EllipticPP":
             graph_window_size = "hour"
     else:
         task = "Edge"
-        lightning_root_dir = "experiments/dyfraudnet/edge_level"
     dataset = get_dataset(name=dataset_name, force_reload=force_reload_dataset, edge_window_size=graph_window_size,
                           num_windows=num_windows)
-    print(colored(f"Number of windows: {len(dataset)}","blue"))
+    print(colored(f"Number of windows: {len(dataset)}", "blue"))
     num_nodes = dataset.num_nodes
     previous_embeddings = [torch.zeros((num_nodes, hidden_size)) for _ in range(num_layers)]
     if task == "Node":
@@ -142,6 +144,20 @@ def main():
                           gnn_type=gnn_type,
                           dropout=dropout,
                           update='moving')
+        print_model_params(model)
+        print("HawkGCN method")
+        model = NodeHawkGNN(in_dim=dataset[0].x.shape[1], layers=num_layers, hid_dim=hidden_size,
+                            n_node=dataset.num_nodes,
+                            gnn_type="GCN",
+                            dropout=dropout,
+                            )
+        print_model_params(model)
+        print("HawkGAT method")
+        model = NodeHawkGNN(in_dim=dataset[0].x.shape[1], layers=num_layers, hid_dim=hidden_size,
+                            n_node=dataset.num_nodes,
+                            gnn_type="GAT",
+                            dropout=dropout,
+                            )
         print_model_params(model)
     else:
         print("Our method with memory False:")
@@ -177,5 +193,20 @@ def main():
                               dropout=dropout,
                               update="moving")
         print_model_params(model)
+        print("HawkGCN method")
+        model = EdgeHawkGNN(in_dim=dataset[0].x.shape[1], layers=num_layers, hid_dim=hidden_size,
+                            n_node=dataset.num_nodes,
+                            gnn_type="GCN",
+                            dropout=dropout,
+                            )
+        print_model_params(model)
+        print("HawkGAT method")
+        model = EdgeHawkGNN(in_dim=dataset[0].x.shape[1], layers=num_layers, hid_dim=hidden_size,
+                            n_node=dataset.num_nodes,
+                            gnn_type="GAT",
+                            dropout=dropout,
+                            )
+        print_model_params(model)
+
 if __name__ == "__main__":
     main()
