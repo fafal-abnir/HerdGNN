@@ -83,11 +83,17 @@ class LightningNodeGNN(L.LightningModule):
         self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
     def test_step(self, batch, batch_idx):
+        start_time = time.time()
         loss, avg_pr, aucnpr, auc_roc= self._shared_step(batch)
+        batch_size = batch[0].size(0)
+        duration = time.time() - start_time
+        throughput = batch_size / duration
         self.log("test_avg_pr", avg_pr)
         self.log("test_aucnpr", aucnpr)
         self.log("test_au_roc", auc_roc)
         self.log("test_loss", loss)
+        self.log("test_samples_count", batch_size)
+        self.log("test_throughput_samples_per_sec", throughput)
 
     def get_node_embeddings(self, batch):
         """Extracts node embeddings before and after training."""
@@ -176,11 +182,17 @@ class LightningEdgeGNN(L.LightningModule):
         self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
     def test_step(self, batch, batch_idx):
+        start_time = time.time()
         loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
+        batch_size = batch[0].size(0)
+        duration = time.time() - start_time
+        throughput = batch_size / duration
         self.log("test_avg_pr", avg_pr)
         self.log("test_aucnpr", aucnpr)
         self.log("test_au_roc", auc_roc)
         self.log("test_loss", loss)
+        self.log("test_samples_count", batch_size)
+        self.log("test_throughput_samples_per_sec", throughput)
 
     def get_node_embeddings(self, batch):
         """Extracts node embeddings before and after training."""
