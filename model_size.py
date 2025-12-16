@@ -2,18 +2,12 @@ import argparse
 import torch
 from termcolor import colored
 from colorama import init
-import copy
-import pytorch_lightning as L
-from pytorch_lightning.callbacks import ModelCheckpoint, DeviceStatsMonitor, EarlyStopping
-from pytorch_lightning.loggers import CSVLogger
 from datasets.data_loading import get_dataset
-from torch_geometric.data import DataLoader
 from models.dyfraudnet.model import NodeDyFraudNet, EdgeDyFraudNet
 from models.roland.model import RolandGNN, EdgeRolandGNN
 from models.hawkes.model import NodeHawkGNN, EdgeHawkGNN
-from models.dyfraudnet.lightning_modules import LightningNodeGNN, LightningEdgeGNN
+from models.wingnn.model import NodeGNN, EdgeGNN
 from datetime import datetime
-from utils.visualization import visualize_embeddings
 
 torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = False
@@ -119,8 +113,23 @@ def main():
                                out_put_size=2, dropout=dropout, num_layers=num_layers,
                                gnn_type=gnn_type, enable_memory=False)
         print_model_params(model)
-        print("Our method with memory True:")
-        model = NodeDyFraudNet(dataset[0].x.shape[1], memory_size=memory_size, hidden_size=hidden_size,
+        print("Our method with memory True - M64:")
+        model = NodeDyFraudNet(dataset[0].x.shape[1], memory_size=64, hidden_size=hidden_size,
+                               out_put_size=2, dropout=dropout, num_layers=num_layers,
+                               gnn_type=gnn_type, enable_memory=True)
+        print_model_params(model)
+        print("Our method with memory True - M128:")
+        model = NodeDyFraudNet(dataset[0].x.shape[1], memory_size=128, hidden_size=hidden_size,
+                               out_put_size=2, dropout=dropout, num_layers=num_layers,
+                               gnn_type=gnn_type, enable_memory=True)
+        print_model_params(model)
+        print("Our method with memory True - M192:")
+        model = NodeDyFraudNet(dataset[0].x.shape[1], memory_size=192, hidden_size=hidden_size,
+                               out_put_size=2, dropout=dropout, num_layers=num_layers,
+                               gnn_type=gnn_type, enable_memory=True)
+        print_model_params(model)
+        print("Our method with memory True - M256:")
+        model = NodeDyFraudNet(dataset[0].x.shape[1], memory_size=256, hidden_size=hidden_size,
                                out_put_size=2, dropout=dropout, num_layers=num_layers,
                                gnn_type=gnn_type, enable_memory=True)
         print_model_params(model)
@@ -159,6 +168,12 @@ def main():
                             dropout=dropout,
                             )
         print_model_params(model)
+        print("WinGNN method")
+        model = NodeGNN(input_dim=dataset[0].x.shape[1], num_layers=num_layers, hidden_size=hidden_size,
+                        gnn_type="GAT",
+                        dropout=dropout,
+                        )
+        print_model_params(model)
     else:
         print("Our method with memory False:")
         model = EdgeDyFraudNet(dataset[0].x.shape[1], edge_attr_dim=dataset.num_edge_features,
@@ -166,10 +181,28 @@ def main():
                                memory_size=memory_size, hidden_size=hidden_size,
                                gnn_type=gnn_type, enable_memory=False)
         print_model_params(model)
-        print("Our method with memory True:")
+        print("Our method with memory True- M64:")
         model = EdgeDyFraudNet(dataset[0].x.shape[1], edge_attr_dim=dataset.num_edge_features,
                                num_layers=num_layers, dropout=dropout,
-                               memory_size=memory_size, hidden_size=hidden_size,
+                               memory_size=64, hidden_size=hidden_size,
+                               gnn_type=gnn_type, enable_memory=True)
+        print_model_params(model)
+        print("Our method with memory True- M128:")
+        model = EdgeDyFraudNet(dataset[0].x.shape[1], edge_attr_dim=dataset.num_edge_features,
+                               num_layers=num_layers, dropout=dropout,
+                               memory_size=128, hidden_size=hidden_size,
+                               gnn_type=gnn_type, enable_memory=True)
+        print_model_params(model)
+        print("Our method with memory True- M192:")
+        model = EdgeDyFraudNet(dataset[0].x.shape[1], edge_attr_dim=dataset.num_edge_features,
+                               num_layers=num_layers, dropout=dropout,
+                               memory_size=192, hidden_size=hidden_size,
+                               gnn_type=gnn_type, enable_memory=True)
+        print_model_params(model)
+        print("Our method with memory True- M256:")
+        model = EdgeDyFraudNet(dataset[0].x.shape[1], edge_attr_dim=dataset.num_edge_features,
+                               num_layers=num_layers, dropout=dropout,
+                               memory_size=256, hidden_size=hidden_size,
                                gnn_type=gnn_type, enable_memory=True)
         print_model_params(model)
         print("Roland method with gru")
@@ -206,6 +239,12 @@ def main():
                             gnn_type="GAT",
                             dropout=dropout,
                             )
+        print_model_params(model)
+        print("WinGNN method")
+        model = EdgeGNN(input_dim=dataset[0].x.shape[1], num_layers=num_layers, hidden_size=hidden_size,
+                        gnn_type="GAT",
+                        dropout=dropout,
+                        )
         print_model_params(model)
 
 if __name__ == "__main__":

@@ -48,3 +48,10 @@ python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --dataset=EthereumPhishing --graph_window_size=month --num_windows=20;
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --use_bn --dropout=0.1 --dataset=EthereumPhishing --graph_window_size=month --num_windows=20;
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --use_bn --dropout=0.1 --dataset=EthereumPhishing --graph_window_size=month --num_windows=20;
+#WinGNN
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --dataset=EthereumPhishing --sliding_window_size=6 --train_wingnn_window_size=4 --graph_window_size=month --num_windows=20;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --dataset=EthereumPhishing --sliding_window_size=6 --train_wingnn_window_size=3--graph_window_size=month --num_windows=20;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --dataset=EthereumPhishing --sliding_window_size=6 --train_wingnn_window_size=4 --graph_window_size=month --num_windows=20;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --dataset=EthereumPhishing --sliding_window_size=6 --train_wingnn_window_size=3--graph_window_size=month --num_windows=20;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --dataset=EthereumPhishing --sliding_window_size=6 --train_wingnn_window_size=4 --graph_window_size=month --num_windows=20;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --dataset=EthereumPhishing --sliding_window_size=6 --train_wingnn_window_size=3--graph_window_size=month --num_windows=20;

@@ -98,3 +98,10 @@ python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --num_layers=2 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --num_layers=2 --use_bn --dropout=0.1 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --num_layers=2 --use_bn --dropout=0.1 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+#WinGNN
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --num_layers=2 --sliding_window_size=6 --train_wingnn_window_size=4 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --num_layers=2 --sliding_window_size=6 --train_wingnn_window_size=3 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --num_layers=2 --sliding_window_size=6 --train_wingnn_window_size=4 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --num_layers=2 --sliding_window_size=6 --train_wingnn_window_size=3 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --num_layers=2 --sliding_window_size=6 --train_wingnn_window_size=4 --dataset=RedditTitle --graph_window_size=week --num_windows=178;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --num_layers=2 --sliding_window_size=6 --train_wingnn_window_size=3 --dataset=RedditTitle --graph_window_size=week --num_windows=178;

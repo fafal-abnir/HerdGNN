@@ -48,4 +48,10 @@ python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --dataset=AMLWorldSmall --graph_window_size=day --hawk_window_size=4 --num_windows=10;
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --use_bn --dropout=0.1 --dataset=AMLWorldSmall --hawk_window_size=4 --graph_window_size=day --num_windows=10;
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --use_bn --dropout=0.1 --dataset=AMLWorldSmall --hawk_window_size=4 --graph_window_size=day --num_windows=10;
-
+#WinGNN
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --dataset=AMLWorldSmall --sliding_window_size=6 --train_wingnn_window_size=4 --graph_window_size=day --num_windows=10;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --dataset=AMLWorldSmall --sliding_window_size=6 --train_wingnn_window_size=3 --graph_window_size=day --num_windows=10;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --dataset=AMLWorldSmall --sliding_window_size=6 --train_wingnn_window_size=4 --graph_window_size=day --num_windows=10;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --dataset=AMLWorldSmall --sliding_window_size=6 --train_wingnn_window_size=3 --graph_window_size=day --num_windows=10;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --dataset=AMLWorldSmall --sliding_window_size=6 --train_wingnn_window_size=4 --graph_window_size=day --num_windows=10;
+python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --dataset=AMLWorldSmall --sliding_window_size=6 --train_wingnn_window_size=3 --graph_window_size=day --num_windows=10;

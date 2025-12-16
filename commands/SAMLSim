@@ -39,6 +39,42 @@ python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --
 python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.2 --blend_factor=1.0 --hidden_size=128 --enable_memory;
 python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.2 --blend_factor=1.0 --hidden_size=128 --fresh_start;
 python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.2 --blend_factor=1.0 --hidden_size=128 --enable_memory --fresh_start;
+## Hyper param sensivity
+### dropout
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.0 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.2 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.3 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.4 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+### memory size
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=32 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=64 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=96 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=128 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=160 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=160 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=192 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=224 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+### hidden size
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=32 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=64 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=96 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+### alpha
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.0 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.2 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.4 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.8 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=1.0 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+### blend factor
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.1 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.2 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.4 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.8 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory;
+python3 dyfraudnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --num_windows=46 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=1.0 --hidden_size=128 --enable_memory;
 #Roland
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=gru --dataset=SAMLSim --graph_window_size=week --num_windows=46;
 python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=mlp --dataset=SAMLSim --graph_window_size=week --num_windows=46;
@@ -48,4 +84,12 @@ python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --dataset=SAMLSim --graph_window_size=week --num_windows=46;
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --use_bn --dropout=0.1 --dataset=SAMLSim --graph_window_size=week --num_windows=46;
 python3 hawk_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --use_bn --dropout=0.1 --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+#WinGNN
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --sliding_window_size=6 --train_wingnn_window_size=4 --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GCN --sliding_window_size=6 --train_wingnn_window_size=3 --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --sliding_window_size=6 --train_wingnn_window_size=4 --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --sliding_window_size=6 --train_wingnn_window_size=3 --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --sliding_window_size=6 --train_wingnn_window_size=4 --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --sliding_window_size=6 --train_wingnn_window_size=3 --dataset=SAMLSim --graph_window_size=week --num_windows=46;
+
 

@@ -23,6 +23,7 @@ python3 model_size.py --gnn_type=GIN --dataset_name=MOOC --graph_window_size=day
 python3 model_size.py --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=256 --dropout=0.0 --hidden_size=128;
 python3 model_size.py --gnn_type=GIN --dataset_name=DGraphFin --graph_window_size=week --memory_size=256 --dropout=0.0 --hidden_size=128;
 python3 model_size.py --gnn_type=GIN --dataset_name=EthereumPhishing --graph_window_size=month --memory_size=256 --dropout=0.0 --hidden_size=128;
+python3 model_size.py --gnn_type=GIN --dataset_name=AMLWorldSmall --graph_window_size=day --memory_size=256 --dropout=0.0 --hidden_size=128;
 
 python3 model_size.py --gnn_type=GIN --dataset_name=RedditTitle --graph_window_size=week --memory_size=128 --dropout=0.0 --hidden_size=128;
 python3 model_size.py --gnn_type=GIN --dataset_name=RedditBody --graph_window_size=week --memory_size=128 --dropout=0.0 --hidden_size=128;
@@ -31,4 +32,7 @@ python3 model_size.py --gnn_type=GIN --dataset_name=MOOC --graph_window_size=day
 python3 model_size.py --gnn_type=GIN --dataset_name=SAMLSim --graph_window_size=week --memory_size=128 --dropout=0.0 --hidden_size=128;
 python3 model_size.py --gnn_type=GIN --dataset_name=DGraphFin --graph_window_size=week --memory_size=128 --dropout=0.0 --hidden_size=128;
 python3 model_size.py --gnn_type=GIN --dataset_name=EthereumPhishing --graph_window_size=month --memory_size=128 --dropout=0.0 --hidden_size=128;
+python3 model_size.py --gnn_type=GIN --dataset_name=AMLWorldSmall --graph_window_size=day --memory_size=128 --dropout=0.0 --hidden_size=128;
+python3 model_size.py --gnn_type=GIN --dataset_name=AMLWorldMedium --graph_window_size=day --memory_size=128 --dropout=0.0 --hidden_size=128;
+python3 model_size.py --gnn_type=GIN --dataset_name=AMLWorldLarge --graph_window_size=day --memory_size=128 --dropout=0.0 --hidden_size=128;
 
