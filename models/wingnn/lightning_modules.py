@@ -27,6 +27,7 @@ class LightningNodeGNN(L.LightningModule):
         self.automatic_optimization = False
         self.param_names = [name for name, _ in self.model.named_parameters()]
         self.S_dw = [torch.zeros_like(p) for _, p in self.model.named_parameters()]
+        self.epoch_start_time = None
 
     def reset_loss(self, loss):
         self.loss_fn = loss()
@@ -94,9 +95,9 @@ class LightningNodeGNN(L.LightningModule):
         num_pos = (labels == 1).sum().float()
         num_neg = (labels == 0).sum().float()
         pos_weight = num_neg / (num_pos + 1e-6)
-
         pred, _ = self.forward_with_fast_weights(batch, fast_weights)
-
+        # elapsed_time = time.time() - start_time
+        # self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
         loss_fn = BCEWithLogitsLoss(pos_weight=pos_weight)
         bce_loss = loss_fn(pred[mask], labels.type_as(pred))
 
@@ -187,7 +188,7 @@ class LightningNodeGNN(L.LightningModule):
                 avg_pr_window_means.append(torch.stack(window_avg_pr_list).mean().item())
                 auc_roc_window_means.append(torch.stack(window_auc_roc_list).mean().item())
         elapsed_time = time.time() - start_time
-        self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log("backprop_time", elapsed_time, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         if len(aucnpr_window_means) > 0:
             mean_aucnpr = float(torch.tensor(aucnpr_window_means).mean().item())
             mean_avg_pr = float(torch.tensor(avg_pr_window_means).mean().item())
@@ -217,15 +218,29 @@ class LightningNodeGNN(L.LightningModule):
         start_time = time.time()
         loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         batch_size = batch[0].size(0)
-        duration = time.time() - start_time
-        throughput = batch_size / duration
+        forward_time = time.time() - start_time
+        throughput = batch_size / forward_time
         self.log("test_avg_pr", avg_pr)
         self.log("test_aucnpr", aucnpr)
         self.log("test_au_roc", auc_roc)
         self.log("test_loss", loss)
+        self.log("test_forward_time", forward_time)
         self.log("test_samples_count", batch_size)
         self.log("test_throughput_samples_per_sec", throughput)
 
+    def on_train_epoch_start(self):
+        self.epoch_start_time = time.time()
+
+    def on_train_epoch_end(self):
+        epoch_time = time.time() - self.epoch_start_time
+        self.log(
+            "epoch_time_sec",
+            epoch_time,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+        )
 
     def get_node_embeddings(self, batch):
         """Extracts node embeddings before and after training."""
@@ -250,6 +265,7 @@ class LightningEdgeGNN(L.LightningModule):
         self.automatic_optimization = False
         self.param_names = [name for name, _ in self.model.named_parameters()]
         self.S_dw = [torch.zeros_like(p) for _, p in self.model.named_parameters()]
+        self.epoch_start_time = None
 
     def reset_loss(self, loss):
         self.loss_fn = loss()
@@ -400,7 +416,7 @@ class LightningEdgeGNN(L.LightningModule):
                 avg_pr_window_means.append(torch.stack(window_avg_pr_list).mean().item())
                 auc_roc_window_means.append(torch.stack(window_auc_roc_list).mean().item())
         elapsed_time = time.time() - start_time
-        self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log("backprop_time", elapsed_time, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         if len(aucnpr_window_means) > 0:
             mean_aucnpr = float(torch.tensor(aucnpr_window_means).mean().item())
             mean_avg_pr = float(torch.tensor(avg_pr_window_means).mean().item())
@@ -430,14 +446,29 @@ class LightningEdgeGNN(L.LightningModule):
         start_time = time.time()
         loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         batch_size = batch[0].size(0)
-        duration = time.time() - start_time
-        throughput = batch_size / duration
+        forward_time = time.time() - start_time
+        throughput = batch_size / forward_time
         self.log("test_avg_pr", avg_pr)
         self.log("test_aucnpr", aucnpr)
         self.log("test_au_roc", auc_roc)
         self.log("test_loss", loss)
+        self.log("test_forward_time", forward_time)
         self.log("test_samples_count", batch_size)
         self.log("test_throughput_samples_per_sec", throughput)
+
+    def on_train_epoch_start(self):
+        self.epoch_start_time = time.time()
+
+    def on_train_epoch_end(self):
+        epoch_time = time.time() - self.epoch_start_time
+        self.log(
+            "epoch_time_sec",
+            epoch_time,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+        )
 
     def get_node_embeddings(self, batch):
         """Extracts node embeddings before and after training."""

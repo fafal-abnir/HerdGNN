@@ -51,6 +51,7 @@ class RolandGNN(torch.nn.Module):
             else:  # GCN
                 self.convs.append(pyg_nn.GCNConv(hidden_size, hidden_size))
         self.postprocessing1 = pyg_nn.Linear(hidden_size, 1)
+        self.postprocessing_anomaly = pyg_nn.Linear(hidden_size, 1)
         self.dropout = dropout
         # Update layer
         self.update = update
@@ -81,6 +82,7 @@ class RolandGNN(torch.nn.Module):
         for conv in self.convs:
             conv.reset_parameters()
         self.postprocessing1.reset_parameters()
+        self.postprocessing_anomaly.reset_parameters()
 
     def forward(self, x, edge_index):
         current_embeddings = [torch.Tensor([]) for _ in range(self.num_layers)]
@@ -107,9 +109,10 @@ class RolandGNN(torch.nn.Module):
                 prev = getattr(self, f"previous_embeddings{i}")
                 h = self.tau * prev + (1 - self.tau) * h
             current_embeddings[i] = h.clone()
-        h = self.postprocessing1(h)
-        h = h.view(-1)
-        return h, current_embeddings
+        out = self.postprocessing1(h)
+        out = out.view(-1)
+        anomaly_score = self.postprocessing_anomaly(h).squeeze(-1)
+        return out, anomaly_score, current_embeddings
 
 
 class EdgeRolandGNN(torch.nn.Module):
@@ -134,6 +137,7 @@ class EdgeRolandGNN(torch.nn.Module):
             else:  # GCN
                 self.convs.append(pyg_nn.GCNConv(hidden_size, hidden_size))
         self.postprocessing1 = pyg_nn.Linear(2*hidden_size+edge_attr_dim, 1)
+        self.postprocessing_anomaly = pyg_nn.Linear(2 * hidden_size + edge_attr_dim, 1)
         self.dropout = dropout
         # Update layer
         self.update = update
@@ -192,12 +196,13 @@ class EdgeRolandGNN(torch.nn.Module):
                 h = self.tau * prev + (1 - self.tau) * h
             current_embeddings[i] = h.clone()
 
-        # HADAMARD
         h_src = h[edge_label_index[0]]
         h_dst = h[edge_label_index[1]]
+        # HADAMARD
         # h_hadamard = torch.mul(h_src, h_dst)
         # edge_attr = edge_features[edge_label_index]
         combined = torch.cat([h_src, h_dst, edge_attr], dim=1)
-        h = self.postprocessing1(combined)
-        h = h.view(-1)
-        return h, current_embeddings
+        out = self.postprocessing1(combined)
+        out = out.view(-1)
+        anomaly_score = self.postprocessing_anomaly(combined).squeeze(-1)
+        return out, anomaly_score, current_embeddings

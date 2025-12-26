@@ -25,6 +25,9 @@ def get_args():
     parser = argparse.ArgumentParser(description="Roland Training Arguments")
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs (default: 10)")
     parser.add_argument("--learning_rate", type=float, default=0.01, help="learning rate(default:0.001")
+    parser.add_argument("--alpha", type=float, default=0.1, help="weight of deviation loss to addup to loss function")
+    parser.add_argument("--anomaly_loss_margin", type=float, default=4.0, help="Anomaly loss margin")
+    parser.add_argument("--blend_factor", type=float, default=0.9, help="blend factor for merging 2 distribution")
     parser.add_argument("--num_layers", type=int, default=2, help="Number of layers in roland")
     parser.add_argument("--hidden_size", type=int, default=16, help="Size of hidden layers (default: 16)")
     parser.add_argument("--gnn_type", type=str, choices=["GIN", "GAT", "GCN"], default="GCN",
@@ -65,6 +68,9 @@ def main():
     hidden_size = args.hidden_size
     epochs = args.epochs
     learning_rate = args.learning_rate
+    alpha = args.alpha
+    anomaly_loss_margin = args.anomaly_loss_margin
+    blend_factor = args.blend_factor
     gnn_type = args.gnn_type
     update_type = args.update_type
     fresh_start = args.fresh_start
@@ -124,7 +130,8 @@ def main():
                 total_size = (param_size + buffer_size) / (1024 ** 2)
                 print(colored(count_model_elements(model), "green"))
                 print(f"Model size (parameters + buffers): {total_size:.2f} MB")
-            lightningModule = LightningNodeGNN(model, learning_rate=learning_rate)
+            lightningModule = LightningNodeGNN(model, learning_rate=learning_rate, alpha=alpha,
+                                               anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
             experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_size}/{experiment_datetime}/index_{data_index}"
             csv_logger = CSVLogger(experiments_dir, version="")
             csv_logger.log_hyperparams(vars(args))
@@ -157,7 +164,7 @@ def main():
                                 callbacks=[checkpoint_callback]
                                 )
             trainer.fit(lightningModule, train_loader, val_loader)
-            _, previous_embeddings = lightningModule.forward(train_data)
+            _, _, previous_embeddings = lightningModule.forward(train_data)
             model.set_previous_embeddings(previous_embeddings)
             # testing
             test_data = copy.deepcopy(dataset[data_index + 1])
@@ -208,7 +215,8 @@ def main():
                 print(colored(count_model_elements(model), "green"))
                 total_size = (param_size + buffer_size) / (1024 ** 2)
                 print(f"Model size (parameters + buffers): {total_size:.2f} MB")
-            lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate)
+            lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate, alpha=alpha,
+                                               anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
             experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/{gnn_type}_{update_type}_{hidden_size}/{experiment_datetime}/index_{data_index}"
             csv_logger = CSVLogger(experiments_dir, version="")
             csv_logger.log_hyperparams(vars(args))
@@ -241,7 +249,7 @@ def main():
                                 callbacks=[checkpoint_callback]
                                 )
             trainer.fit(lightningModule, train_loader, val_loader)
-            _, previous_embeddings = lightningModule.forward(train_data)
+            _, _, previous_embeddings = lightningModule.forward(train_data)
             model.set_previous_embeddings(previous_embeddings)
             # Preparing test data
             test_data = copy.deepcopy(dataset[data_index + 1])

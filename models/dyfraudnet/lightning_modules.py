@@ -36,6 +36,7 @@ class LightningNodeGNN(L.LightningModule):
         self.loss_fn = BCEWithLogitsLoss()
         self.save_hyperparameters(ignore=["model"])
         self.automatic_optimization = False
+        self.epoch_start_time = None
 
     def reset_loss(self, loss):
         self.loss_fn = loss()
@@ -98,10 +99,13 @@ class LightningNodeGNN(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
+        start_time = time.time()
         optimizer = self.optimizers()  # Get the optimizer
         self.manual_backward(loss, retain_graph=True)  # Manually handle backward pass
         optimizer.step()  # Update the model parameters
         optimizer.zero_grad()  # Zero the gradients for the next step
+        backprop_time = time.time() - start_time
+        self.log("backprop_time", backprop_time, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_avg_pr", avg_pr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_aucnpr", aucnpr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_au_roc", auc_roc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -119,14 +123,30 @@ class LightningNodeGNN(L.LightningModule):
         start_time = time.time()
         loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         batch_size = batch[0].size(0)
-        duration = time.time() - start_time
-        throughput = batch_size / duration
+        forward_time = time.time() - start_time
+        throughput = batch_size / forward_time
         self.log("test_avg_pr", avg_pr)
         self.log("test_aucnpr", aucnpr)
         self.log("test_au_roc", auc_roc)
         self.log("test_loss", loss)
+        self.log("test_forward_time", forward_time)
         self.log("test_samples_count", batch_size)
         self.log("test_throughput_samples_per_sec", throughput)
+
+    def on_train_epoch_start(self):
+        self.epoch_start_time = time.time()
+
+    def on_train_epoch_end(self):
+        epoch_time = time.time() - self.epoch_start_time
+
+        self.log(
+            "epoch_time_sec",
+            epoch_time,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+        )
 
     def compute_deviation_score(self, scores: torch.Tensor) -> torch.Tensor:
         mu = self.normal_as_mean
@@ -166,6 +186,7 @@ class LightningEdgeGNN(L.LightningModule):
         self.loss_fn = BCEWithLogitsLoss()
         self.save_hyperparameters(ignore=["model"])
         self.automatic_optimization = False
+        self.epoch_start_time = None
 
     def reset_loss(self, loss):
         self.loss_fn = loss()
@@ -231,10 +252,13 @@ class LightningEdgeGNN(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
+        start_time = time.time()
         optimizer = self.optimizers()  # Get the optimizer
         self.manual_backward(loss, retain_graph=True)  # Manually handle backward pass
         optimizer.step()  # Update the model parameters
         optimizer.zero_grad()  # Zero the gradients for the next step
+        backprop_time = time.time() - start_time
+        self.log("backprop_time", backprop_time, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_avg_pr", avg_pr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_aucnpr", aucnpr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_au_roc", auc_roc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -252,14 +276,30 @@ class LightningEdgeGNN(L.LightningModule):
         start_time = time.time()
         loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         batch_size = batch[0].size(0)
-        duration = time.time() - start_time
-        throughput = batch_size / duration
+        forward_time = time.time() - start_time
+        throughput = batch_size / forward_time
         self.log("test_avg_pr", avg_pr)
         self.log("test_aucnpr", aucnpr)
         self.log("test_au_roc", auc_roc)
         self.log("test_loss", loss)
+        self.log("test_forward_time", forward_time)
         self.log("test_samples_count", batch_size)
         self.log("test_throughput_samples_per_sec", throughput)
+
+    def on_train_epoch_start(self):
+        self.epoch_start_time = time.time()
+
+    def on_train_epoch_end(self):
+        epoch_time = time.time() - self.epoch_start_time
+
+        self.log(
+            "epoch_time_sec",
+            epoch_time,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+        )
 
     def compute_deviation_score(self, scores: torch.Tensor) -> torch.Tensor:
         mu = self.normal_as_mean
