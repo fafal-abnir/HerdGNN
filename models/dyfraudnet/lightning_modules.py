@@ -166,7 +166,7 @@ class LightningNodeGNN(L.LightningModule):
 
     def get_node_embeddings(self, batch):
         """Extracts node embeddings before and after training."""
-        _, node_embeddings = self.forward(batch)
+        _, _, node_embeddings = self.forward(batch)
         return node_embeddings
 
 

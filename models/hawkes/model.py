@@ -42,7 +42,7 @@ class HGCNConv(MessagePassing):
     def __init__(self, n_node: int, in_channels: int, out_channels: int, dropout: float = 0.0, bias: bool = False):
         super().__init__(aggr='add')
         self.lin = Linear(in_channels, out_channels, bias=False, weight_initializer='glorot')
-        self.decay = Parameter(torch.ones(n_node, 1))  # per-source-node δ ≥ 0
+        self.decay = Parameter(torch.ones(n_node, 1))  # per-source-node theta should be ≥ 0
         # self._decay_raw = Parameter(torch.full((n_node, 1), -2.0))
 
         self.dropout = dropout
@@ -150,6 +150,7 @@ class NodeHawkGNN(nn.Module):
                 out_dim = (hid_dim // heads) * heads if concat else hid_dim
                 if self.bns is not None: self.bns.append(nn.BatchNorm1d(out_dim))
         self.cls = nn.Linear(out_dim, 1)
+        self.postprocessing_anomaly = nn.Linear(out_dim, 1)
 
     def forward(self, x: Tensor, edge_index: Tensor, edge_age: Tensor):
         h = self.input(x)
@@ -163,7 +164,8 @@ class NodeHawkGNN(nn.Module):
                 h = F.relu(h)
                 h = self.dropout(h)
         logits = self.cls(h).squeeze(-1)  # [N] binary logit
-        return logits, h
+        anomaly_score = self.postprocessing_anomaly(h).squeeze(-1)
+        return logits, anomaly_score, h
 
 
 class EdgeHawkGNN(nn.Module):
@@ -201,6 +203,7 @@ class EdgeHawkGNN(nn.Module):
                 if self.bns is not None: self.bns.append(nn.BatchNorm1d(out_dim))
 
         self.cls = nn.Linear(2 * out_dim + edge_attr_dim, 1)
+        self.postprocessing_anomaly = nn.Linear(2 * out_dim + edge_attr_dim, 1)
 
     def forward(self, x: Tensor, edge_index: Tensor, edge_label_index: Tensor, edge_attr,
                 edge_age: Tensor):
@@ -218,4 +221,5 @@ class EdgeHawkGNN(nn.Module):
         z_src, z_dst = h[edge_label_index[0]], h[edge_label_index[1]]
         feat = torch.cat([z_src, z_dst, edge_attr], dim=1)
         logits = self.cls(feat).view(-1)  # [#edges_to_score]
-        return logits, h
+        anomaly_score = self.postprocessing_anomaly(feat).squeeze(-1)
+        return logits, anomaly_score, h

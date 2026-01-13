@@ -5,9 +5,8 @@ import copy
 from termcolor import colored
 from colorama import init
 import pytorch_lightning as L
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import CSVLogger
-from torch_geometric.loader import NeighborLoader
 
 from datasets.data_loading import get_dataset
 from torch_geometric.data import DataLoader
@@ -24,10 +23,10 @@ init()
 def get_args():
     parser = argparse.ArgumentParser(description="Roland Training Arguments")
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs (default: 10)")
-    parser.add_argument("--learning_rate", type=float, default=0.01, help="learning rate(default:0.001")
-    parser.add_argument("--alpha", type=float, default=0.1, help="weight of deviation loss to addup to loss function")
+    parser.add_argument("--learning_rate", type=float, default=0.005, help="learning rate(default:0.001")
+    parser.add_argument("--alpha", type=float, default=0.0, help="weight of deviation loss to addup to loss function")
     parser.add_argument("--anomaly_loss_margin", type=float, default=4.0, help="Anomaly loss margin")
-    parser.add_argument("--blend_factor", type=float, default=0.9, help="blend factor for merging 2 distribution")
+    parser.add_argument("--blend_factor", type=float, default=1.0, help="blend factor for merging 2 distribution")
     parser.add_argument("--num_layers", type=int, default=2, help="Number of layers in roland")
     parser.add_argument("--hidden_size", type=int, default=16, help="Size of hidden layers (default: 16)")
     parser.add_argument("--gnn_type", type=str, choices=["GIN", "GAT", "GCN"], default="GCN",
