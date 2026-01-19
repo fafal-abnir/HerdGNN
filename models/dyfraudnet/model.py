@@ -62,8 +62,8 @@ class EdgeDyFraudNet(nn.Module):
                  num_layers=2,
                  dropout=0.0, heads=1):
         super().__init__()
-        self.preprocess1 = Linear(input_dim, 128)
-        self.preprocess2 = Linear(128, hidden_size)
+        self.preprocess1 = Linear(input_dim, hidden_size)
+        # self.preprocess2 = Linear(128, hidden_size)
         self.convs = nn.ModuleList()
         for i in range(num_layers):
             if enable_memory:
@@ -91,9 +91,9 @@ class EdgeDyFraudNet(nn.Module):
         h = self.preprocess1(x)
         h = F.leaky_relu(h, inplace=False)
         h = F.dropout(h, p=self.dropout, inplace=True)
-        h = self.preprocess2(h)
-        h = F.leaky_relu(h, inplace=False)
-        h = F.dropout(h, p=self.dropout, inplace=True)
+        # h = self.preprocess2(h)
+        # h = F.leaky_relu(h, inplace=False)
+        # h = F.dropout(h, p=self.dropout, inplace=True)
         for conv in self.convs:
             h = conv(h, edge_index)
             h = F.leaky_relu(h)

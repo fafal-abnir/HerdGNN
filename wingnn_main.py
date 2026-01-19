@@ -24,6 +24,9 @@ def get_args():
     parser = argparse.ArgumentParser(description="DyFraudNetGNN Training Arguments")
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs (default: 10)")
     parser.add_argument("--learning_rate", type=float, default=0.01, help="learning rate(default:0.01")
+    parser.add_argument("--alpha", type=float, default=0.1, help="weight of deviation loss to addup to loss function")
+    parser.add_argument("--anomaly_loss_margin", type=float, default=4.0, help="Anomaly loss margin")
+    parser.add_argument("--blend_factor", type=float, default=0.9, help="blend factor for merging 2 distribution")
     parser.add_argument("--hidden_size", type=int, default=128, help="Size of hidden layers (default: 128)")
     parser.add_argument("--gnn_type", type=str, choices=["GIN", "GAT", "GCN"], default="GCN",
                         help="Type of GNN model: GIN, GAT, or GCN (default: GCN)")
@@ -66,6 +69,9 @@ def main():
     hidden_size = args.hidden_size
     epochs = args.epochs
     learning_rate = args.learning_rate
+    alpha = args.alpha
+    anomaly_loss_margin = args.anomaly_loss_margin
+    blend_factor = args.blend_factor
     gnn_type = args.gnn_type
     sliding_window_size = args.sliding_window_size
     train_wingnn_window_size = args.train_wingnn_window_size
@@ -141,7 +147,8 @@ def main():
                                 out_put_size=2, dropout=dropout, num_layers=num_layers,
                                 gnn_type=gnn_type)
             lightningModule = LightningNodeGNN(model, learning_rate=learning_rate,
-                                               training_window_size=train_wingnn_window_size)
+                                               training_window_size=train_wingnn_window_size, alpha=alpha,
+                                               anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
             csv_logger.log_hyperparams(vars(args))
             print(colored(f"Time Index: {data_index}, data: {dataset_name}", "yellow"))
             print(train_data_list)
@@ -171,7 +178,7 @@ def main():
                                 devices="auto",
                                 enable_progress_bar=True,
                                 logger=csv_logger,
-                                max_epochs=epochs,
+                                max_epochs=epochs, precision="16-mixed",
                                 callbacks=[checkpoint_callback]
                                 )
             # Visualization embedding before training
@@ -251,7 +258,8 @@ def main():
                                 hidden_size=hidden_size,
                                 gnn_type=gnn_type)
             lightningModule = LightningEdgeGNN(model, learning_rate=learning_rate,
-                                               training_window_size=train_wingnn_window_size)
+                                               training_window_size=train_wingnn_window_size, alpha=alpha,
+                                               anomaly_loss_margin=anomaly_loss_margin, blend_factor=blend_factor)
             # experiments_dir = f"{lightning_root_dir}/{dataset_name}/{graph_window_size}/Mem{enable_memory}_{gnn_type}_F{fresh_start}/{experiment_datetime}/index_{data_index}"
             # csv_logger = CSVLogger(experiments_dir, version="")
             csv_logger.log_hyperparams(vars(args))
@@ -284,7 +292,7 @@ def main():
                                 devices="auto",
                                 enable_progress_bar=True,
                                 logger=csv_logger,
-                                max_epochs=epochs,
+                                max_epochs=epochs, precision="16-mixed",
                                 callbacks=[checkpoint_callback]
                                 )
             # Visualization embedding before training

@@ -111,4 +111,5 @@ python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --g
 python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GAT --sliding_window_size=6 --train_wingnn_window_size=3 --dataset="EllipticPP" --num_windows=49;
 python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --sliding_window_size=6 --train_wingnn_window_size=4 --dataset="EllipticPP" --num_windows=49;
 python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --sliding_window_size=6 --train_wingnn_window_size=3 --dataset="EllipticPP" --num_windows=49;
-
+## with deviation loss
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --alph=0.1 --blend_factor=0.9 --hidden_size=128 --gnn_type=GIN --sliding_window_size=6 --train_wingnn_window_size=4 --dataset="EllipticPP" --num_windows=49;

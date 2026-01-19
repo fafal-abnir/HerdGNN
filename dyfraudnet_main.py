@@ -168,7 +168,7 @@ def main():
                                 devices="auto",
                                 enable_progress_bar=True,
                                 logger=csv_logger,
-                                max_epochs=epochs,
+                                max_epochs=epochs, precision="16-mixed",
                                 callbacks=[checkpoint_callback]
                                 )
             # Visualization embedding before training
@@ -293,7 +293,7 @@ def main():
                                 devices="auto",
                                 enable_progress_bar=True,
                                 logger=csv_logger,
-                                max_epochs=epochs,
+                                max_epochs=epochs,precision="16-mixed",
                                 callbacks=[checkpoint_callback]
                                 )
             # Visualization embedding before training

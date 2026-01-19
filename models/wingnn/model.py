@@ -23,12 +23,14 @@ class NodeGNN(nn.Module):
             else:  # GCN
                 self.convs.append(pyg_nn.GCNConv(hidden_size, hidden_size))
         self.postprocessing1 = geom_nn.Linear(hidden_size, out_put_size)
+        self.postprocessing_anomaly = geom_nn.Linear(hidden_size, 1)
         self.dropout = dropout
 
     def reset_parameters(self):
         for conv in self.convs:
             conv.reset_parameters()
         self.postprocessing1.reset_parameters()
+        self.postprocessing_anomaly.reset_parameters()
 
     def forward(self, x, edge_index):
         # Preprocess step
@@ -45,10 +47,11 @@ class NodeGNN(nn.Module):
             h = F.dropout(h, p=self.dropout, training=self.training)
         out = self.postprocessing1(h)
         out = torch.sum(out, dim=-1)
-        return out, h
+        anomaly_score = self.postprocessing_anomaly(h).squeeze(-1)
+        return out, anomaly_score, h
 
     def get_embedding(self, x, edge_index):
-        _, embeddings = self.forward(x, edge_index)
+        _, _, embeddings = self.forward(x, edge_index)
         return embeddings
 
 
@@ -69,12 +72,14 @@ class EdgeGNN(nn.Module):
             else:  # GCN
                 self.convs.append(pyg_nn.GCNConv(hidden_size, hidden_size))
         self.postprocessing1 = geom_nn.Linear(2 * hidden_size + edge_attr_dim, 1)
+        self.postprocessing_anomaly = geom_nn.Linear(2 * hidden_size + edge_attr_dim, 1)
         self.dropout = dropout
 
     def reset_parameters(self):
         self.conv1.reset_parameters()
         self.conv2.reset_parameters()
         self.postprocessing1.reset_parameters()
+        self.postprocessing_anomaly.reset_parameters()
 
     def forward(self, x, edge_index, edge_label_index, edge_attr):
         # Preprocess step
@@ -96,8 +101,10 @@ class EdgeGNN(nn.Module):
         # h = self.postprocessing1(h_hat)
         # CLS layer
         out = out.view(-1)
-        return out, h
+        # deviation layer
+        anomaly_score = self.postprocessing_anomaly(combined).squeeze(-1)
+        return out, anomaly_score, h
 
     def get_embedding(self, x, edge_index):
-        _, embeddings = self.forward(x, edge_index)
+        _, _, embeddings = self.forward(x, edge_index)
         return embeddings
