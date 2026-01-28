@@ -59,14 +59,16 @@ class RolandGNN(torch.nn.Module):
         if self.update == "moving":
             self.tau = torch.Tensor([0])
         elif self.update == "gru":
-            self.gru_cells = nn.ModuleList([GRUCell(self.hidden_size, self.hidden_size) for _ in range(self.num_layers)])
+            self.gru_cells = nn.ModuleList(
+                [GRUCell(self.hidden_size, self.hidden_size) for _ in range(self.num_layers)])
         elif self.update == "mlp":
-            self.mlp_layers = nn.ModuleList([pyg_nn.Linear(self.hidden_size * 2, self.hidden_size) for _ in range(self.num_layers)])
+            self.mlp_layers = nn.ModuleList(
+                [pyg_nn.Linear(self.hidden_size * 2, self.hidden_size) for _ in range(self.num_layers)])
         else:
             assert (0 <= self.update <= 1)
             self.tau = torch.Tensor([self.update])
         for i in range(num_layers):
-            self.register_buffer(f"previous_embeddings{i}", previous_embeddings[0].clone().detach())
+            self.register_buffer(f"previous_embeddings{i}", previous_embeddings[i].clone().detach())
 
     def set_previous_embeddings(self, previous_embeddings):
         with torch.no_grad():
@@ -112,11 +114,15 @@ class RolandGNN(torch.nn.Module):
         out = self.postprocessing1(h)
         out = out.view(-1)
         anomaly_score = self.postprocessing_anomaly(h).squeeze(-1)
-        return out, anomaly_score, current_embeddings
+        return out, anomaly_score, current_embeddings, h
+
+    def get_embedding(self, x, edge_index):
+        _, _, _, embeddings = self.forward(x, edge_index)
+        return embeddings
 
 
 class EdgeRolandGNN(torch.nn.Module):
-    def __init__(self, input_dim,num_layers, hidden_size, num_nodes, previous_embeddings, edge_attr_dim,
+    def __init__(self, input_dim, num_layers, hidden_size, num_nodes, previous_embeddings, edge_attr_dim,
                  dropout=0.0, gnn_type="GCN",
                  update='gru', heads=1):
 
@@ -136,7 +142,7 @@ class EdgeRolandGNN(torch.nn.Module):
                     nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.ReLU())))
             else:  # GCN
                 self.convs.append(pyg_nn.GCNConv(hidden_size, hidden_size))
-        self.postprocessing1 = pyg_nn.Linear(2*hidden_size+edge_attr_dim, 1)
+        self.postprocessing1 = pyg_nn.Linear(2 * hidden_size + edge_attr_dim, 1)
         self.postprocessing_anomaly = pyg_nn.Linear(2 * hidden_size + edge_attr_dim, 1)
         self.dropout = dropout
         # Update layer
@@ -145,14 +151,16 @@ class EdgeRolandGNN(torch.nn.Module):
         if self.update == "moving":
             self.tau = torch.Tensor([0])
         elif self.update == "gru":
-            self.gru_cells = nn.ModuleList([GRUCell(self.hidden_size, self.hidden_size) for _ in range(self.num_layers)])
+            self.gru_cells = nn.ModuleList(
+                [GRUCell(self.hidden_size, self.hidden_size) for _ in range(self.num_layers)])
         elif self.update == "mlp":
-            self.mlp_layers = nn.ModuleList([pyg_nn.Linear(self.hidden_size * 2, self.hidden_size) for _ in range(self.num_layers)])
+            self.mlp_layers = nn.ModuleList(
+                [pyg_nn.Linear(self.hidden_size * 2, self.hidden_size) for _ in range(self.num_layers)])
         else:
             assert (0 <= self.update <= 1)
             self.tau = torch.Tensor([self.update])
         for i in range(num_layers):
-            self.register_buffer(f"previous_embeddings{i}", previous_embeddings[0].clone().detach())
+            self.register_buffer(f"previous_embeddings{i}", previous_embeddings[i].clone().detach())
 
     def set_previous_embeddings(self, previous_embeddings):
         with torch.no_grad():

@@ -11,8 +11,8 @@ class NodeHSGAD(nn.Module):
                  num_layers=2,
                  dropout=0.0, heads=1):
         super().__init__()
-        self.preprocess1 = Linear(input_dim, 64)
-        self.preprocess2 = Linear(64, hidden_size)
+        self.preprocess1 = Linear(input_dim, 128)
+        self.preprocess2 = Linear(128, hidden_size)
         self.convs = nn.ModuleList()
         for i in range(num_layers):
             if gnn_type == "GAT":

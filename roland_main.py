@@ -13,6 +13,8 @@ from torch_geometric.data import DataLoader
 from models.roland.model import RolandGNN, EdgeRolandGNN
 from models.roland.lightning_modules import LightningNodeGNN, LightningEdgeGNN
 from datetime import datetime
+from utils.visualization import visualize_embeddings
+
 
 torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = False
@@ -43,6 +45,8 @@ def get_args():
     parser.add_argument("--graph_window_size", type=str, choices=["day", "week", "month"], default="month",
                         help="the size of graph window size")
     parser.add_argument("--num_windows", type=int, default=10, help="Number of windows for running the experiment")
+    parser.add_argument("--embedding_visualization", action="store_true",
+                        help="Visualization of train data before and after training")
     return parser.parse_args()
 
 
@@ -73,6 +77,7 @@ def main():
     gnn_type = args.gnn_type
     update_type = args.update_type
     fresh_start = args.fresh_start
+    embedding_visualization = args.embedding_visualization
     dropout = args.dropout
     # Data arguments
     dataset_name = args.dataset_name
@@ -162,8 +167,31 @@ def main():
                                 max_epochs=epochs,
                                 callbacks=[checkpoint_callback]
                                 )
+
+
+            # if embedding_visualization:
+            #     print("start visualization")
+            #     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            #     model = model.to(device)
+            #     model.eval()
+            #     train_data = train_data.to(device)
+            #     train_labels = train_data.y[train_data.node_mask]
+            #     train_labels_np = train_labels.cpu().numpy()
+            #     with torch.no_grad():
+            #         all_embeddings = model.get_embedding(train_data.x, train_data.edge_index)
+            #         train_embeddings_np = all_embeddings[train_data.node_mask].cpu().numpy()
+            #     train_label_colors = ['blue' if label == 0 else 'red' for label in train_labels_np]
+            #     visualize_embeddings(train_embeddings_np, train_label_colors, 0,
+            #                          f'{experiments_dir}/train_embeddings_not_trained.png')
+
+            # trainer.fit(lightningModule, train_loader, val_loader)
+            # trainer.test(lightningModule, test_loader)
+
+
+
+
             trainer.fit(lightningModule, train_loader, val_loader)
-            _, _, previous_embeddings = lightningModule.forward(train_data)
+            _, _, previous_embeddings, _ = lightningModule.forward(train_data)
             model.set_previous_embeddings(previous_embeddings)
             # testing
             test_data = copy.deepcopy(dataset[data_index + 1])
@@ -174,6 +202,30 @@ def main():
             trainer.test(lightningModule, test_loader)
             model.set_tau((test_data.edge_index.size(1) + 1e-8) / (
                     train_data.edge_index.size(1) + test_data.edge_index.size(1) + 1e-8))
+            # Visualization embedding
+            if embedding_visualization:
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                model = model.to(device)
+                model.eval()
+                train_data = train_data.to(device)
+                train_labels = train_data.y[train_data.node_mask]
+                train_labels_np = train_labels.cpu().numpy()
+                test_data = test_data.to(device)
+                test_labels = test_data.y[test_data.node_mask]
+                test_labels_np = test_labels.cpu().numpy()
+                with torch.no_grad():
+                    train_embeddings = model.get_embedding(train_data.x, train_data.edge_index)
+                    train_embeddings_np = train_embeddings[train_data.node_mask].cpu().numpy()
+                    test_embeddings = model.get_embedding(test_data.x, test_data.edge_index)
+                    test_embeddings_np = test_embeddings[test_data.node_mask].cpu().numpy()
+                # train_label_colors = ['blue' if label == 0 else 'red' for label in train_data.y.cpu().numpy()]
+                train_label_colors = ['blue' if label == 0 else 'red' for label in train_labels_np]
+                test_label_colors = ['blue' if label == 0 else 'red' for label in test_labels_np]
+
+                visualize_embeddings(train_embeddings_np, train_label_colors, epochs,
+                                     f'{experiments_dir}/train_embedding_trained.png')
+                visualize_embeddings(test_embeddings_np, test_label_colors, 'None',
+                                     f'{experiments_dir}/test_embedding.png')
             del train_data, train_loader, val_data, val_loader, test_data, test_loader, snapshot, previous_embeddings
             gc.collect()
             torch.cuda.empty_cache()

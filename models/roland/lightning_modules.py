@@ -40,14 +40,15 @@ class LightningNodeGNN(L.LightningModule):
         self.train_start_time = None
         self.epoch_times = []
         self.epoch_start_time = None
+
     def reset_loss(self, loss):
         self.loss_fn = loss()
 
     def forward(self, data):
         x = data.x
         edge_index = data.edge_index
-        pred, anomaly_scores, current_embeddings = self.model(x, edge_index)
-        return pred, anomaly_scores, current_embeddings
+        pred, anomaly_scores, current_embeddings, h = self.model(x, edge_index)
+        return pred, anomaly_scores, current_embeddings, h
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(params=self.parameters(), lr=self.learning_rate, weight_decay=5e-4)
@@ -61,7 +62,7 @@ class LightningNodeGNN(L.LightningModule):
         num_neg = (labels == 0).sum().float()
         pos_weight = num_neg / (num_pos + 1e-6)
 
-        pred, anomaly_scores, _ = self.forward(batch)
+        pred, anomaly_scores, _, _ = self.forward(batch)
         # classification loss
         loss_fn = BCEWithLogitsLoss(pos_weight=pos_weight)
         bce_loss = loss_fn(pred[mask], labels.type_as(pred))
@@ -76,10 +77,10 @@ class LightningNodeGNN(L.LightningModule):
         auc_roc = self.metric_auroc(pred_cont[batch.node_mask], batch.y[batch.node_mask].int())
         avg_pr = self.metric_avgpr(pred_cont[batch.node_mask], batch.y[batch.node_mask].int())
         num_total = labels.numel()
-        num_pos = (labels ==1).sum().item()
-        skew_ratio = num_pos/num_total
+        num_pos = (labels == 1).sum().item()
+        skew_ratio = num_pos / num_total
         aucpr_min = 1 + ((1 - skew_ratio) * torch.log(torch.tensor(1 - skew_ratio))) / skew_ratio
-        aucnpr = (avg_pr-aucpr_min)/(1-aucpr_min)
+        aucnpr = (avg_pr - aucpr_min) / (1 - aucpr_min)
         if self.current_epoch + 1 == self.trainer.max_epochs:
             normal_scores = masked_anomaly_scores[labels == 0]
             mu, sigma = merge_gaussians(self.normal_as_mean, self.normal_as_std, normal_scores.mean().item(),
@@ -122,7 +123,7 @@ class LightningNodeGNN(L.LightningModule):
 
     def test_step(self, batch, batch_idx):
         start_time = time.time()
-        loss, avg_pr, aucnpr, auc_roc= self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
         batch_size = batch[0].size(0)
         forward_time = time.time() - start_time
         throughput = batch_size / forward_time
@@ -152,6 +153,7 @@ class LightningNodeGNN(L.LightningModule):
             prog_bar=True,
             logger=True,
         )
+
     def compute_deviation_score(self, scores: torch.Tensor) -> torch.Tensor:
         mu = self.normal_as_mean
         sigma = self.normal_as_std + 1e-6
@@ -167,9 +169,10 @@ class LightningNodeGNN(L.LightningModule):
         if len(anomaly_loss) > 0:
             loss += anomaly_loss.mean()
         return loss
+
     def get_node_embeddings(self, batch):
         """Extracts node embeddings before and after training."""
-        _, node_embeddings = self.forward(batch)
+        _, _, _, node_embeddings = self.forward(batch)
         return node_embeddings
 
 
@@ -304,7 +307,6 @@ class LightningEdgeGNN(L.LightningModule):
             logger=True,
         )
 
-
     def compute_deviation_score(self, scores: torch.Tensor) -> torch.Tensor:
         mu = self.normal_as_mean
         sigma = self.normal_as_std + 1e-6
@@ -320,6 +322,7 @@ class LightningEdgeGNN(L.LightningModule):
         if len(anomaly_loss) > 0:
             loss += anomaly_loss.mean()
         return loss
+
     def get_node_embeddings(self, batch):
         """Extracts node embeddings before and after training."""
         _, node_embeddings = self.forward(batch)

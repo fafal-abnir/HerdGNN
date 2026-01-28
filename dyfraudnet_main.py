@@ -34,11 +34,12 @@ def get_args():
     parser.add_argument("--gnn_type", type=str, choices=["GIN", "GAT", "GCN"], default="GCN",
                         help="Type of GNN model: GIN, GAT, or GCN (default: GCN)")
     parser.add_argument("--num_layers", type=int, default=2, help="Number of GNN layers")
+    parser.add_argument("--use_bn", action="store_true")
     parser.add_argument("--dropout", type=float, default=0.0, help="dropout rate")
     parser.add_argument("--dataset_name", type=str,
                         choices=["EllipticPP", "DGraphFin", "BitcoinOTC", "MOOC",
                                  "RedditTitle", "RedditBody", "EthereumPhishing", "SAMLSim",
-                                 "AMLWorldLarge", "AMLWorldMedium", "AMLWorldSmall"], default="RedditTitle")
+                                 "AMLWorldLarge", "AMLWorldMedium", "AMLWorldSmall"], default="SAMLSim")
     parser.add_argument("--force_reload_dataset", action="store_true", help="Force to download the dataset again.")
     parser.add_argument("--graph_window_size", type=str, choices=["day", "week", "month"], default="month",
                         help="the size of graph window size")
@@ -78,11 +79,14 @@ def main():
     gnn_type = args.gnn_type
     num_layers = args.num_layers
     dropout = args.dropout
+    use_bn = args.use_bn
     # Data arguments
     dataset_name = args.dataset_name
     force_reload_dataset = args.force_reload_dataset
     graph_window_size = args.graph_window_size
     num_windows = args.num_windows
+
+    print(colored(vars(args),"red"))
     model = None
     experiment_datetime = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     if dataset_name in ["DGraphFin", "EllipticPP", "EthereumPhishing"]:
@@ -124,7 +128,7 @@ def main():
                 test_data.x = torch.Tensor([[1] for _ in range(test_data.num_nodes)])
             if (model is None) or fresh_start:
                 model = NodeDyFraudNet(snapshot.x.shape[1], memory_size=memory_size, hidden_size=hidden_size,
-                                       out_put_size=2, dropout=dropout, num_layers=num_layers,
+                                       out_put_size=2, dropout=dropout, num_layers=num_layers, use_bn=use_bn,
                                        gnn_type=gnn_type, enable_memory=enable_memory)
                 param_size = 0
                 for param in model.parameters():
@@ -247,7 +251,7 @@ def main():
             if (model is None) or fresh_start:
                 model = EdgeDyFraudNet(snapshot.x.shape[1], edge_attr_dim=dataset.num_edge_features,
                                        num_layers=num_layers, dropout=dropout,
-                                       memory_size=memory_size, hidden_size=hidden_size,
+                                       memory_size=memory_size, hidden_size=hidden_size, use_bn=use_bn,
                                        gnn_type=gnn_type, enable_memory=enable_memory)
                 param_size = 0
                 for param in model.parameters():
@@ -293,7 +297,7 @@ def main():
                                 devices="auto",
                                 enable_progress_bar=True,
                                 logger=csv_logger,
-                                max_epochs=epochs,precision="16-mixed",
+                                max_epochs=epochs,
                                 callbacks=[checkpoint_callback]
                                 )
             # Visualization embedding before training

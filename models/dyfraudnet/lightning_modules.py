@@ -1,9 +1,17 @@
 import time
+from typing import Literal
 import torch
 from scipy.stats import norm
-from torchmetrics.classification import BinaryAveragePrecision, BinaryAUROC
 import torch.nn.functional as F
 from torch.nn import BCEWithLogitsLoss
+from torchmetrics.classification import (
+    BinaryAveragePrecision,
+    BinaryAUROC,
+    BinaryPrecision,
+    BinaryRecall,
+    BinaryF1Score,
+    BinaryAccuracy,
+)
 
 import pytorch_lightning as L
 
@@ -26,13 +34,23 @@ class LightningNodeGNN(L.LightningModule):
         super().__init__()
         self.model = model
         self.learning_rate = learning_rate
+        # Threshold-free metrics
         self.metric_avgpr = BinaryAveragePrecision()
         self.metric_auroc = BinaryAUROC()
+
+        # Threshold-based (minority-focused)
+        self.metric_precision = BinaryPrecision()
+        self.metric_recall = BinaryRecall()
+        self.metric_f1 = BinaryF1Score()
+        self.metric_accuracy = BinaryAccuracy()
+
         self.hparams.alpha = alpha
         self.anomaly_loss_margin = anomaly_loss_margin
         self.blend_factor = blend_factor
+
         self.normal_as_mean = 0
         self.normal_as_std = 1
+        self.best_threshold = 0.5
         self.loss_fn = BCEWithLogitsLoss()
         self.save_hyperparameters(ignore=["model"])
         self.automatic_optimization = False
@@ -51,7 +69,7 @@ class LightningNodeGNN(L.LightningModule):
         optimizer = torch.optim.Adam(params=self.parameters(), lr=self.learning_rate, weight_decay=5e-4)
         return optimizer
 
-    def _shared_step(self, batch):
+    def _shared_step(self, batch, step_type: Literal["Train", "Val", "Test"] = False):
         start_time = time.time()
         mask = batch.node_mask
         labels = batch.y[mask]
@@ -79,6 +97,18 @@ class LightningNodeGNN(L.LightningModule):
         skew_ratio = num_pos / float(num_total)
         aucpr_min = 1 + ((1 - skew_ratio) * torch.log(torch.tensor(1 - skew_ratio))) / skew_ratio
         aucnpr = (avg_pr - aucpr_min) / (1 - aucpr_min)
+        # threshold-based used only for val
+        # at the last epoch we find the treshold, at test we log
+        precision = -1
+        recall = -1
+        f1_min = -1
+        accuracy = -1
+        if step_type == "Test":
+            preds_bin = (pred_cont >= self.best_threshold).int()
+            precision = self.metric_precision(preds_bin[batch.node_mask], labels)
+            recall = self.metric_recall(preds_bin[batch.node_mask], labels)
+            f1_min = self.metric_f1(preds_bin[batch.node_mask], labels)
+            accuracy = self.metric_accuracy(preds_bin[batch.node_mask], labels)
         if self.current_epoch + 1 == self.trainer.max_epochs:
             normal_scores = masked_anomaly_scores[labels == 0]
             mu, sigma = merge_gaussians(self.normal_as_mean, self.normal_as_std, normal_scores.mean().item(),
@@ -86,7 +116,22 @@ class LightningNodeGNN(L.LightningModule):
             self.normal_as_mean = mu
             self.normal_as_std = sigma
             self.anomaly_loss_margin = norm.ppf(1 - skew_ratio / 2, loc=mu, scale=sigma)
-            print(self.anomaly_loss_margin)
+            self.log("skew_ratio", skew_ratio, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+            # print(self.anomaly_loss_margin)
+            if step_type == "Val":
+                thresholds = torch.linspace(0.001, 0.999, 200)
+                best_f1 = -1.0
+                best_t = 0.5
+                for t in thresholds:
+                    preds_bin = (pred_cont >= t).int()
+                    precision = self.metric_precision(preds_bin[batch.node_mask], labels)
+                    recall = self.metric_recall(preds_bin[batch.node_mask], labels)
+                    f1_min = self.metric_f1(preds_bin[batch.node_mask], labels)
+                    accuracy = self.metric_accuracy(preds_bin[batch.node_mask], labels)
+                    if f1_min > best_f1:
+                        best_f1 = f1_min
+                        best_t = t
+                self.best_threshold = best_t
         elapsed_time = time.time() - start_time
         self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
         if torch.cuda.is_available():
@@ -95,10 +140,10 @@ class LightningNodeGNN(L.LightningModule):
             self.log("gpu_memory_allocated_MB", memory_allocated, prog_bar=True, on_step=False, on_epoch=True)
             self.log("gpu_memory_reserved_MB", memory_reserved, prog_bar=True, on_step=False, on_epoch=True)
 
-        return total_loss, avg_pr, aucnpr, auc_roc
+        return total_loss, avg_pr, aucnpr, auc_roc, precision, recall, f1_min, accuracy
 
     def training_step(self, batch, batch_idx):
-        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc, precision, recall, f1_min, accuracy = self._shared_step(batch)
         start_time = time.time()
         optimizer = self.optimizers()  # Get the optimizer
         self.manual_backward(loss, retain_graph=True)  # Manually handle backward pass
@@ -113,7 +158,7 @@ class LightningNodeGNN(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc, precision, recall, f1_min, accuracy = self._shared_step(batch, step_type="Val")
         self.log("val_avg_pr", avg_pr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("val_aucnpr", aucnpr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("val_au_roc", auc_roc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -121,17 +166,24 @@ class LightningNodeGNN(L.LightningModule):
 
     def test_step(self, batch, batch_idx):
         start_time = time.time()
-        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc, precision, recall, f1_min, accuracy = self._shared_step(batch, step_type="Test")
         batch_size = batch[0].size(0)
         forward_time = time.time() - start_time
         throughput = batch_size / forward_time
         self.log("test_avg_pr", avg_pr)
         self.log("test_aucnpr", aucnpr)
         self.log("test_au_roc", auc_roc)
+        self.log("test_precision", precision)
+        self.log("test_recall", recall)
+        self.log("test_f1_min", f1_min)
+        self.log("test_accuracy", accuracy)
         self.log("test_loss", loss)
         self.log("test_forward_time", forward_time)
         self.log("test_samples_count", batch_size)
         self.log("test_throughput_samples_per_sec", throughput)
+        self.log("normal_as_mean", self.normal_as_mean)
+        self.log("normal_as_std", self.normal_as_std)
+        self.log("anomaly_loss_margin", self.anomaly_loss_margin)
 
     def on_train_epoch_start(self):
         self.epoch_start_time = time.time()
@@ -178,11 +230,20 @@ class LightningEdgeGNN(L.LightningModule):
         self.learning_rate = learning_rate
         self.metric_avgpr = BinaryAveragePrecision()
         self.metric_auroc = BinaryAUROC()
+        # Threshold-based (minority-focused)
+        self.metric_precision = BinaryPrecision()
+        self.metric_recall = BinaryRecall()
+        self.metric_f1 = BinaryF1Score()
+        self.metric_accuracy = BinaryAccuracy()
+
         self.hparams.alpha = alpha
         self.anomaly_loss_margin = anomaly_loss_margin
         self.blend_factor = blend_factor
+
         self.normal_as_mean = 0
         self.normal_as_std = 1
+        self.best_threshold = 0.5
+
         self.loss_fn = BCEWithLogitsLoss()
         self.save_hyperparameters(ignore=["model"])
         self.automatic_optimization = False
@@ -203,7 +264,7 @@ class LightningEdgeGNN(L.LightningModule):
         optimizer = torch.optim.Adam(params=self.parameters(), lr=self.learning_rate, weight_decay=5e-4)
         return optimizer
 
-    def _shared_step(self, batch):
+    def _shared_step(self, batch, step_type: Literal["Train", "Val", "Test"] = False):
         start_time = time.time()
         # mask = batch.node_mask
         # labels = batch.y[mask]
@@ -232,6 +293,18 @@ class LightningEdgeGNN(L.LightningModule):
         skew_ratio = num_pos / float(num_total)
         aucpr_min = 1 + ((1 - skew_ratio) * torch.log(torch.tensor(1 - skew_ratio))) / skew_ratio
         aucnpr = (avg_pr - aucpr_min) / (1 - aucpr_min)
+        # threshold-based used only for val
+        # at the last epoch we find the treshold, at test we log
+        precision = -1
+        recall = -1
+        f1_min = -1
+        accuracy = -1
+        if step_type == "Test":
+            preds_bin = (pred_cont >= self.best_threshold).int()
+            precision = self.metric_precision(preds_bin, labels)
+            recall = self.metric_recall(preds_bin, labels)
+            f1_min = self.metric_f1(preds_bin, labels)
+            accuracy = self.metric_accuracy(preds_bin, labels)
         if self.current_epoch + 1 == self.trainer.max_epochs:
             normal_scores = masked_anomaly_scores[labels == 0]
             mu, sigma = merge_gaussians(self.normal_as_mean, self.normal_as_std, normal_scores.mean().item(),
@@ -239,7 +312,23 @@ class LightningEdgeGNN(L.LightningModule):
             self.normal_as_mean = mu
             self.normal_as_std = sigma
             self.anomaly_loss_margin = norm.ppf(1 - skew_ratio / 2, loc=mu, scale=sigma)
-            print(f"Anomaly loss margin:{self.anomaly_loss_margin}")
+            self.log("anomaly_loss_margin", self.anomaly_loss_margin, on_step=False, on_epoch=True, prog_bar=True)
+            self.log("skew_ratio", skew_ratio, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+            # print(self.anomaly_loss_margin)
+            if step_type == "Val":
+                thresholds = torch.linspace(0.001, 0.999, 200)
+                best_f1 = -1.0
+                best_t = 0.5
+                for t in thresholds:
+                    preds_bin = (pred_cont >= t).int()
+                    precision = self.metric_precision(preds_bin, labels)
+                    recall = self.metric_recall(preds_bin, labels)
+                    f1_min = self.metric_f1(preds_bin, labels)
+                    accuracy = self.metric_accuracy(preds_bin, labels)
+                    if f1_min > best_f1:
+                        best_f1 = f1_min
+                        best_t = t
+                self.best_threshold = best_t
         elapsed_time = time.time() - start_time
         self.log("time_sec", elapsed_time, on_step=False, on_epoch=True, prog_bar=True)
         if torch.cuda.is_available():
@@ -248,10 +337,10 @@ class LightningEdgeGNN(L.LightningModule):
             self.log("gpu_memory_allocated_MB", memory_allocated, prog_bar=True, on_step=False, on_epoch=True)
             self.log("gpu_memory_reserved_MB", memory_reserved, prog_bar=True, on_step=False, on_epoch=True)
 
-        return total_loss, avg_pr, aucnpr, auc_roc
+        return total_loss, avg_pr, aucnpr, auc_roc, precision, recall, f1_min, accuracy
 
     def training_step(self, batch, batch_idx):
-        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc, precision, recall, f1_min, accuracy = self._shared_step(batch)
         start_time = time.time()
         optimizer = self.optimizers()  # Get the optimizer
         self.manual_backward(loss, retain_graph=True)  # Manually handle backward pass
@@ -266,7 +355,7 @@ class LightningEdgeGNN(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc, precision, recall, f1_min, accuracy = self._shared_step(batch,step_type="Val")
         self.log("val_avg_pr", avg_pr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("val_aucnpr", aucnpr, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log("val_au_roc", auc_roc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -274,17 +363,25 @@ class LightningEdgeGNN(L.LightningModule):
 
     def test_step(self, batch, batch_idx):
         start_time = time.time()
-        loss, avg_pr, aucnpr, auc_roc = self._shared_step(batch)
+        loss, avg_pr, aucnpr, auc_roc, precision, recall, f1_min, accuracy = self._shared_step(batch,step_type="Test")
         batch_size = batch[0].size(0)
         forward_time = time.time() - start_time
         throughput = batch_size / forward_time
         self.log("test_avg_pr", avg_pr)
         self.log("test_aucnpr", aucnpr)
         self.log("test_au_roc", auc_roc)
+        self.log("test_precision", precision)
+        self.log("test_recall", recall)
+        self.log("test_f1_min", f1_min)
+        self.log("test_accuracy", accuracy)
         self.log("test_loss", loss)
         self.log("test_forward_time", forward_time)
         self.log("test_samples_count", batch_size)
         self.log("test_throughput_samples_per_sec", throughput)
+        self.log("normal_as_mean", self.normal_as_mean)
+        self.log("normal_as_std", self.normal_as_std)
+        self.log("anomaly_loss_margin", self.anomaly_loss_margin)
+        self.log("best_threshold",self.best_threshold)
 
     def on_train_epoch_start(self):
         self.epoch_start_time = time.time()
@@ -319,5 +416,5 @@ class LightningEdgeGNN(L.LightningModule):
 
     def get_node_embeddings(self, batch):
         """Extracts node embeddings before and after training."""
-        _, node_embeddings = self.forward(batch)
+        _, _, node_embeddings = self.forward(batch)
         return node_embeddings
