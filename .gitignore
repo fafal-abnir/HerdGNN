@@ -5,6 +5,7 @@ models
 hsgad_main.py
 notebooks/*
 commands
+commands/*
 ### Test ###
 test
 test/*
