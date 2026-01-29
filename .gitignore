@@ -3,6 +3,7 @@
 ### notebooks and unnessary modules for the paper submission ###
 models
 hsgad_main.py
+notebooks/
 notebooks/*
 commands
 commands/*

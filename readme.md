@@ -1,8 +1,8 @@
-# FistGNN
+# HERDGNN
 
 This repository contains the **official implementation** of the paper:
 
-> **Mind the Deviations: Memory-Augmented Snapshot-Based GNNs  
+> **HERDGNN: Hybrid Error-Guided Ranking with Deviation for Abnormality Classification in Dynamic Graphs  
 > for Anomaly Detection in Evolving Graphs**  
 > Vahid Shahrivari Joghan, Ramon Rico, Ioana Karnstedt-Hulpus, Yannis Velegrakis  
 > Proceedings of the VLDB Endowment (PVLDB)
