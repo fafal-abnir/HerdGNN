@@ -9,8 +9,8 @@ from pytorch_lightning.callbacks import ModelCheckpoint, DeviceStatsMonitor, Ear
 from pytorch_lightning.loggers import CSVLogger
 from datasets.data_loading import get_dataset
 from torch_geometric.data import DataLoader
-from models.dyfraudnet.model import NodeDyFraudNet, EdgeDyFraudNet
-from models.dyfraudnet.lightning_modules import LightningNodeGNN, LightningEdgeGNN
+from models.herdnet.model import NodeHERDNet, EdgeHERDNet
+from models.herdnet.lightning_modules import LightningNodeGNN, LightningEdgeGNN
 from datetime import datetime
 from utils.visualization import visualize_embeddings
 
@@ -20,7 +20,7 @@ torch.autograd.set_detect_anomaly(True)
 init()
 
 def get_args():
-    parser = argparse.ArgumentParser(description="DyFraudNetGNN Training Arguments")
+    parser = argparse.ArgumentParser(description="HERDNetGNN Training Arguments")
     parser.add_argument("--enable_memory", action="store_true", help="Enable the memory for GNN")
     parser.add_argument("--fresh_start", action="store_true", help="retraining from scratch on each timestamp")
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs (default: 10)")
@@ -91,12 +91,12 @@ def main():
     experiment_datetime = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     if dataset_name in ["DGraphFin", "EllipticPP", "EthereumPhishing"]:
         task = "Node"
-        lightning_root_dir = "experiments/dyfraudnet/node_level"
+        lightning_root_dir = "experiments/herdnet/node_level"
         if dataset_name == "EllipticPP":
             graph_window_size = "hour"
     else:
         task = "Edge"
-        lightning_root_dir = "experiments/dyfraudnet/edge_level"
+        lightning_root_dir = "experiments/herdnet/edge_level"
     dataset = get_dataset(name=dataset_name, force_reload=force_reload_dataset, edge_window_size=graph_window_size,
                           num_windows=num_windows)
     print(colored(f"Number of windows: {len(dataset)}","blue"))
@@ -127,7 +127,7 @@ def main():
             if snapshot.x is None:
                 test_data.x = torch.Tensor([[1] for _ in range(test_data.num_nodes)])
             if (model is None) or fresh_start:
-                model = NodeDyFraudNet(snapshot.x.shape[1], memory_size=memory_size, hidden_size=hidden_size,
+                model = NodeHERDNet(snapshot.x.shape[1], memory_size=memory_size, hidden_size=hidden_size,
                                        out_put_size=2, dropout=dropout, num_layers=num_layers, use_bn=use_bn,
                                        gnn_type=gnn_type, enable_memory=enable_memory)
                 param_size = 0
@@ -249,7 +249,7 @@ def main():
             if snapshot.x is None:
                 test_data.x = torch.Tensor([[1] for _ in range(test_data.num_nodes)])
             if (model is None) or fresh_start:
-                model = EdgeDyFraudNet(snapshot.x.shape[1], edge_attr_dim=dataset.num_edge_features,
+                model = EdgeHERDNet(snapshot.x.shape[1], edge_attr_dim=dataset.num_edge_features,
                                        num_layers=num_layers, dropout=dropout,
                                        memory_size=memory_size, hidden_size=hidden_size, use_bn=use_bn,
                                        gnn_type=gnn_type, enable_memory=enable_memory)

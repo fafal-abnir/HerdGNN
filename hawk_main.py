@@ -24,7 +24,7 @@ init()
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description="DyFraudNetGNN Training Arguments")
+    parser = argparse.ArgumentParser(description="HERDNetGNN Training Arguments")
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs (default: 10)")
     parser.add_argument("--alpha", type=float, default=0.0, help="weight of deviation loss to addup to loss function")
     parser.add_argument("--anomaly_loss_margin", type=float, default=4.0, help="Anomaly loss margin")

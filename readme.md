@@ -117,6 +117,6 @@ poetry install
 ### Running Experiments
 There are examples of commands for running each method on different dataset for example for running our method on Elliptic dataset:
 ```bash
-python3 dyfraudnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.1 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --force_reload_dataset --enable_memory;
+python3 herdnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.1 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --force_reload_dataset --enable_memory;
 ```
 note that `--force_reload_dataset` force to preprocess dataset again before running the experiment 

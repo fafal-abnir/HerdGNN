@@ -21,7 +21,7 @@ init()
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description="DyFraudNetGNN Training Arguments")
+    parser = argparse.ArgumentParser(description="HERDNetGNN Training Arguments")
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs (default: 10)")
     parser.add_argument("--learning_rate", type=float, default=0.01, help="learning rate(default:0.01")
     parser.add_argument("--alpha", type=float, default=0.1, help="weight of deviation loss to addup to loss function")

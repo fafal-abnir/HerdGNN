@@ -1,6 +1,6 @@
 import itertools
 
-base_command = "python3 dyfraudnet_main.py"
+base_command = "python3 herdnet_main.py"
 fixed_args = {
     "--epochs": 200,
     "--gnn_type": "GIN",
