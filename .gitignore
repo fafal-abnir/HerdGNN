@@ -1,6 +1,12 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm,intellij+all,data
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm,intellij+all,data
+### notebooks and unnessary modules for the paper submission ###
+models
+hsgad_main.py
+notebooks/*
+commands
 ### Test ###
+test
 test/*
 ### Data ###
 experiments/*
@@ -363,3 +369,4 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm,intellij+all,data
 
+/models/hsgad/
