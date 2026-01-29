@@ -1,12 +1,13 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm,intellij+all,data
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm,intellij+all,data
 ### notebooks and unnessary modules for the paper submission ###
-models
+models/hsgad
 hsgad_main.py
 notebooks/
 notebooks/*
 commands
 commands/*
+command_generator.py
 ### Test ###
 test
 test/*
