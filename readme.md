@@ -2,8 +2,7 @@
 
 This repository contains the **official implementation** of the paper:
 
-> **HERDGNN: Hybrid Error-Guided Ranking with Deviation for Abnormality Classification in Dynamic Graphs  
-> for Anomaly Detection in Evolving Graphs**  
+> **HERDGNN: Hybrid Error-Guided Ranking with Deviation for Abnormality Classification in Dynamic Graphs**
 > Vahid Shahrivari Joghan, Ramon Rico, Ioana Karnstedt-Hulpus, Yannis Velegrakis  
 > Proceedings of the VLDB Endowment (PVLDB)
 
@@ -86,7 +85,7 @@ This design allows consistent evaluation across multiple datasets and tasks.
 
 The repository includes:
 
-- **FistGNN** (proposed method)
+- **HERDGNN** (proposed method)
 - Temporal GNN baselines (ROLAND, WinGNN, HawkGNN) and their integration with deviation-loss
 
 ---
@@ -95,7 +94,7 @@ The repository includes:
 
 ### Prerequisites
 
-- Python **3.10** or higher
+- Python **3.11** or higher
 - [Poetry](https://python-poetry.org/) for dependency management
 
 ---
@@ -105,15 +104,19 @@ The repository includes:
 Clone the repository:
 
 ```bash
-git clone -
-cd FistGNN
+git clone https://github.com/fafal-abnir/HerdGNN.git
+cd HERDGNN
 ```
 
 Create and activate the virtual environment and install dependencies:
 ```bash
 poetry shell
 poetry install
+pip3 install -r requirements.txt 
 ```
+requirements.txt is included for convenience, allowing the project to be installed with pip or other virtual-environment tools. 
+Poetry users should rely on `pyproject.toml` and `poetry.lock`
+
 ### Running Experiments
 There are examples of commands for running each method on different dataset for example for running our method on Elliptic dataset:
 ```bash
