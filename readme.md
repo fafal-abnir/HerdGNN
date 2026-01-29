@@ -3,11 +3,12 @@
 This repository contains the **official implementation** of the paper:
 
 > **HERDGNN: Hybrid Error-Guided Ranking with Deviation for Abnormality Classification in Dynamic Graphs**
-> Vahid Shahrivari Joghan, Ramon Rico, Ioana Karnstedt-Hulpus, Yannis Velegrakis  
-> Proceedings of the VLDB Endowment (PVLDB)
 
-The paper studies **node-level and edge-level anomaly detection in discrete-time dynamic graphs** under extreme class imbalance and limited supervision.  
-FistGNN introduces a **memory-augmented snapshot-based GNN** with a **deviation-aware objective**, enabling scalable and incremental learning without storing node histories.
+
+[//]: # (> Proceedings of the VLDB Endowment &#40;PVLDB&#41;)
+
+  
+HERDGNN is a **memory-augmented snapshot-based GNN** with a **deviation-aware objective**, enabling scalable and incremental learning without storing node embeddings.
 
 ---
 
@@ -15,7 +16,7 @@ FistGNN introduces a **memory-augmented snapshot-based GNN** with a **deviation-
 
 Real-world applications such as **financial fraud detection, anti-money laundering (AML), cybersecurity, and social platforms** generate large evolving graphs where anomalies are rare, labels are scarce, and models must be updated continuously.
 
-FistGNN addresses these challenges by:
+HERDGNN addresses these challenges by:
 - Processing the graph as a **sequence of snapshots**
 - Maintaining a **compact, graph-size-agnostic hierarchical memory**
 - Learning anomaly scores via a **deviation-aware loss** that shapes the score distribution under extreme imbalance
@@ -25,7 +26,7 @@ FistGNN addresses these challenges by:
 
 ## Method Summary
 
-FistGNN consists of four key components:
+HERDGNN consists of four key components:
 
 1. **Snapshot-Based GNN Backbone**  
    Each snapshot is processed independently using a standard GNN (e.g., GIN, GCN, GAT).
@@ -78,7 +79,7 @@ Processing includes:
 - Preparing data for training with PyTorch Geometric in DGNN setup
 
 This design allows consistent evaluation across multiple datasets and tasks.
-
+For some datasets you need manually download dataset and put them in `data/dataset_name/raw`.(like Elliptic++ and DGraphFin)
 ---
 
 ## Implemented Models
@@ -110,8 +111,11 @@ cd HERDGNN
 
 Create and activate the virtual environment and install dependencies:
 ```bash
-poetry shell
 poetry install
+poetry shell
+pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https://download.pytorch.org/whl/cu121
+pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.4.0+cu121.html
+pip install torch-geometric
 pip3 install -r requirements.txt 
 ```
 requirements.txt is included for convenience, allowing the project to be installed with pip or other virtual-environment tools. 
@@ -120,6 +124,6 @@ Poetry users should rely on `pyproject.toml` and `poetry.lock`
 ### Running Experiments
 There are examples of commands for running each method on different dataset for example for running our method on Elliptic dataset:
 ```bash
-python3 herdnet_main.py  --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.1 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49 --force_reload_dataset --enable_memory;
+python3 herdnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=RedditTitle --graph_window_size=week --memory_size=192 --num_windows=178 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory --force_reload_dataset;
 ```
 note that `--force_reload_dataset` force to preprocess dataset again before running the experiment 
