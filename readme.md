@@ -90,7 +90,7 @@ For some datasets you need manually download dataset and put them in `data/<data
 The repository includes:
 
 - **HERDGNN** (proposed method)
-- Temporal GNN baselines (ROLAND, WinGNN, HawkGNN) and their integration with deviation-loss
+- Temporal GNN baselines (ROLAND, WinGNN, HawkGNN) and their integration with deviation-loss. for HawkGNN and ROLAND we have fully integrated deviation loss with blending factor. But since WinGNN using sliding window sampling and we integrated deviation loss just based on fix anomaly loss margin(no blending)
 
 ---
 
@@ -128,6 +128,11 @@ Poetry users should rely on `pyproject.toml` and `poetry.lock`
 ### Running Experiments
 There are examples of commands for running each method on different dataset for example for running our method on Elliptic dataset:
 ```bash
-python3 herdnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=RedditTitle --graph_window_size=week --memory_size=192 --num_windows=178 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=128 --enable_memory --force_reload_dataset;
+python3 herdnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=RedditTitle --graph_window_size=week --memory_size=192 --num_windows=178 --learning_rate=0.005 --alpha=0.1 --dropout=0.1 --blend_factor=0.9 --hidden_size=256 --enable_memory --force_reload_dataset;
+python3 herdnet_main.py --epochs=200 --learning_rate=0.005 --alph=0.05 --blend_factor=0.9 --dropout=0.1 --gnn_type=GIN --dataset="EllipticPP"  --hidden_size=128 --memory_size=256 --num_windows=49;
+python3 wingnn_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --sliding_window_size=6 --train_wingnn_window_size=4 --dataset="EllipticPP" --num_windows=49;
+python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=gru --dataset=DGraphFin --graph_window_size=week --num_windows=116;
+python3 herdnet_main.py --epochs=200 --gnn_type=GIN --dataset_name=RedditTitle --graph_window_size=week --memory_size=256 --num_windows=178 --learning_rate=0.005 --alpha=0.05 --dropout=0.1 --blend_factor=0.9 --hidden_size=128;
+python3 roland_main.py  --epochs=200 --learning_rate=0.005 --hidden_size=128 --gnn_type=GIN --update_type=mlp --dataset="EllipticPP" --num_windows=49;
 ```
 note that `--force_reload_dataset` force to preprocess dataset again before running the experiment 
