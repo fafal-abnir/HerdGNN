@@ -12,6 +12,7 @@ This repository contains the **official implementation** of the paper:
   
 HERDGNN is a **snapshot-based dynamic GNN** for rare abnormality/anomaly classification.  
 It uses **constant-size hierarchical temporal memory** (no node-embedding cache) and a **deviation-aware loss**, enabling **scalable live-update training**.
+
 ---
 
 ## Overview
