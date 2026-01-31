@@ -1,26 +1,31 @@
 # HERDGNN
 
+![Alt text](HERDGNN-arch.png)
+
 This repository contains the **official implementation** of the paper:
 
-> **HERDGNN: Hybrid Error-Guided Ranking with Deviation for Abnormality Classification in Dynamic Graphs**
+> **HERDGNN: Hybrid Error-Guided Regularization with Deviation for Imbalance Classification in Dynamic Graphs**
 
 
 [//]: # (> Proceedings of the VLDB Endowment &#40;PVLDB&#41;)
 
   
-HERDGNN is a **memory-augmented snapshot-based GNN** with a **deviation-aware objective**, enabling scalable and incremental learning without storing node embeddings.
-
+HERDGNN is a **snapshot-based dynamic GNN** for rare abnormality/anomaly classification.  
+It uses **constant-size hierarchical temporal memory** (no node-embedding cache) and a **deviation-aware loss**, enabling **scalable live-update training**.
 ---
 
 ## Overview
 
 Real-world applications such as **financial fraud detection, anti-money laundering (AML), cybersecurity, and social platforms** generate large evolving graphs where anomalies are rare, labels are scarce, and models must be updated continuously.
 
-HERDGNN addresses these challenges by:
-- Processing the graph as a **sequence of snapshots**
-- Maintaining a **compact, graph-size-agnostic hierarchical memory**
-- Learning anomaly scores via a **deviation-aware loss** that shapes the score distribution under extreme imbalance
-- Supporting **live-update training**, where the model is incrementally updated without revisiting past snapshots
+
+## Key idea
+
+Dynamic graphs in fraud/AML/cyber/social settings are large, evolving, and extremely imbalanced.  
+HERDGNN tackles this by:
+- maintaining a **fixed-size (graph-size-agnostic) per-layer memory**
+- using a **deviation-aware objective** to push anomalies into the score tail
+- training/evaluating under a **live-update protocol**
 
 ---
 
@@ -47,26 +52,20 @@ HERDGNN consists of four key components:
 
 ## Repository Structure
 
-All implementations follow a unified and modular design using **PyTorch Lightning**.
+All implementations(HERDGNN and other baselines) follow a modular design (PyTorch Lightning).
 
-For simplicity and clarity, each method is organized around **three core files**:
+**Core files**
+- `Main entry script name (herdnet_main.py, roland_main.py,..)`  
+  Entry point for running experiments (arg parsing, dataset/model setup, trainer launch).
+- `lightning_module.py`  
+  Training/validation/testing steps, loss computation, metrics, optimizer.
+- `model.py`  
+  GNN backbone, memory module, scoring head.
 
-1. **`main.py`**  
-   Entry point for running experiments.  
-   - Loads experiment parameters  
-   - Initializes datasets and models  
-   - Launches training and evaluation  
-
-2. **`lightning_module.py`**  
-   Implements the training, validation, and testing strategy.  
-   Includes:
-   - forward pass  
-   - loss computation (classification + deviation loss)  
-   - evaluation metrics  
-   - optimizer and scheduler setup  
-
-3. **`model.py`**  
-   Contains the implementation of the GNN architecture.
+**Directories**
+- `dataset/` : contain the scripts for preprocessing and preparing each dataset 
+- `data/` : where raw/processed datasets are stored
+- `experiments/` : Outputput of metrics for each methods save in this directory after directory
 
 ---
 
@@ -79,7 +78,10 @@ Processing includes:
 - Preparing data for training with PyTorch Geometric in DGNN setup
 
 This design allows consistent evaluation across multiple datasets and tasks.
-For some datasets you need manually download dataset and put them in `data/dataset_name/raw`.(like Elliptic++ and DGraphFin)
+For some datasets you need manually download dataset and put them in `data/<dataset_name>/raw`.(like Elliptic++ and DGraphFin)
+
+[RedditTitle](https://snap.stanford.edu/data/soc-RedditHyperlinks.html), [RedditBody](https://snap.stanford.edu/data/soc-RedditHyperlinks.html), [DGraphFin](https://dgraph.xinye.com), [Elliptic++](https://github.com/git-disl/EllipticPlusPlus), [EthereumPhishing](https://xblock.pro/ethereum#/search?types=datasets&tags=Transaction+Analysis), [SAML](www.kaggle.com/datasets/berkanoztas/synthetic-transaction-monitoring-dataset-aml/data?select=SAML-D.csv), [AMLWorld](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml/data)
+
 ---
 
 ## Implemented Models
@@ -96,6 +98,7 @@ The repository includes:
 ### Prerequisites
 
 - Python **3.11** or higher
+- CUDA 12.1
 - [Poetry](https://python-poetry.org/) for dependency management
 
 ---

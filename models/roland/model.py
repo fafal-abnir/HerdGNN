@@ -7,17 +7,6 @@ import torch.nn as nn
 import torch_geometric.nn as pyg_nn
 
 
-@dataclass
-class ModelConfig:
-    input_dim: int
-    hidden_conv1: int
-    hidden_conv2: int
-    num_nodes: int
-    dropout: float = 0
-    gnn_name: str = "GCN"
-    update: str = "moving"
-
-
 class RolandGNN(torch.nn.Module):
     def __init__(self, input_dim, num_layers, hidden_size, num_nodes, previous_embeddings, dropout=0.0,
                  gnn_type="GCN", update='gru',
