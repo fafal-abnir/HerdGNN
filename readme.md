@@ -66,7 +66,7 @@ All implementations(HERDGNN and other baselines) follow a modular design (PyTorc
 **Directories**
 - `dataset/` : contain the scripts for preprocessing and preparing each dataset 
 - `data/` : where raw/processed datasets are stored
-- `experiments/` : Outputput of metrics for each methods save in this directory after directory
+- `experiments/` : Outputput of metrics for each methods save in this directory.
 
 ---
 
@@ -78,7 +78,6 @@ Processing includes:
 - Transforming raw event streams into **discrete-time graph snapshots**
 - Preparing data for training with PyTorch Geometric in DGNN setup
 
-This design allows consistent evaluation across multiple datasets and tasks.
 For some datasets you need manually download dataset and put them in `data/<dataset_name>/raw`.(like Elliptic++ and DGraphFin)
 
 [RedditTitle](https://snap.stanford.edu/data/soc-RedditHyperlinks.html), [RedditBody](https://snap.stanford.edu/data/soc-RedditHyperlinks.html), [DGraphFin](https://dgraph.xinye.com), [Elliptic++](https://github.com/git-disl/EllipticPlusPlus), [EthereumPhishing](https://xblock.pro/ethereum#/search?types=datasets&tags=Transaction+Analysis), [SAML](www.kaggle.com/datasets/berkanoztas/synthetic-transaction-monitoring-dataset-aml/data?select=SAML-D.csv), [AMLWorld](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml/data)
@@ -90,7 +89,7 @@ For some datasets you need manually download dataset and put them in `data/<data
 The repository includes:
 
 - **HERDGNN** (proposed method)
-- Temporal GNN baselines (ROLAND, WinGNN, HawkGNN) and their integration with deviation-loss. for HawkGNN and ROLAND we have fully integrated deviation loss with blending factor. But since WinGNN using sliding window sampling and we integrated deviation loss just based on fix anomaly loss margin(no blending)
+- Temporal GNN baselines (ROLAND, WinGNN, HawkGNN) and their integration with deviation-loss. for HawkGNN and ROLAND we have fully integrated deviation loss with blending factor. But since WinGNN using sliding window sampling, we integrated deviation loss just based on fix anomaly loss margin(no blending)
 
 ---
 
