@@ -1,7 +1,5 @@
 # HERDGNN
 
-![Alt text](HERDGNN-arch.png)
-
 This repository contains the **official implementation** of the paper:
 
 > **HERDGNN: Hybrid Error-Guided Regularization with Deviation for Imbalance Classification in Dynamic Graphs**
@@ -10,8 +8,9 @@ This repository contains the **official implementation** of the paper:
 [//]: # (> Proceedings of the VLDB Endowment &#40;PVLDB&#41;)
 
   
-HERDGNN is a **snapshot-based dynamic GNN** for rare abnormality/anomaly classification.  
-It uses **constant-size hierarchical temporal memory** (no node-embedding cache) and a **deviation-aware loss**, enabling **scalable live-update training**.
+HERDGNN is a **snapshot-based dynamic GNN** for rare abnormality/anomaly classification. It uses **constant-size hierarchical temporal memory** (no node-embedding cache) and a **deviation-aware loss**, enabling **scalable live-update training**. The overall architecture of HERDGNN is depicted below.
+
+![Alt text](HERDGNN-arch.png)
 
 ---
 
